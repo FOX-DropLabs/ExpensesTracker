@@ -56,6 +56,30 @@
       color: #dc2626; /* rojo */
       text-decoration: underline;
     }
+    /* Estilos para el panel de categorías */
+    #categoriesPanel {
+      max-width: 400px;
+    }
+    #categoriesList {
+      max-height: 160px;
+      overflow-y: auto;
+    }
+    #categoriesList li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.25rem;
+    }
+    #categoriesList button {
+      font-weight: normal;
+      font-size: 0.85rem;
+      padding: 0 6px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: #dc2626;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body class="p-4">
@@ -96,11 +120,7 @@
           <input type="number" id="amount" placeholder="Monto (ARS)" class="form-input" required min="0.01" step="0.01" />
           <select id="category" class="form-input" required>
             <option value="">Seleccionar Categoría</option>
-            <option value="Comida">Comida</option>
-            <option value="Transporte">Transporte</option>
-            <option value="Entretenimiento">Entretenimiento</option>
-            <option value="Vivienda">Vivienda</option>
-            <option value="Salud">Salud</option>
+            <!-- Opciones se llenan dinámicamente -->
           </select>
           <input type="date" id="date" class="form-input" required />
           <textarea id="comment" placeholder="Comentario (opcional)" class="form-input col-span-2" rows="2"></textarea>
@@ -108,6 +128,19 @@
         <button type="submit" class="btn-primary mt-4" id="submitBtn">Agregar</button>
         <button type="button" class="btn-primary mt-4 ml-4 bg-gray-500 hover:bg-gray-700" id="cancelEditBtn" style="display:none;">Cancelar</button>
       </form>
+    </div>
+
+    <!-- Botón para mostrar/ocultar gestión de categorías -->
+    <div class="mb-4">
+      <button id="toggleCategoriesBtn" class="btn-primary text-sm px-3 py-1">Mostrar/Ocultar Gestión de Categorías</button>
+    </div>
+
+    <!-- Panel oculto para administrar categorías -->
+    <div id="categoriesPanel" class="card bg-white p-4 mb-6" style="display:none;">
+      <h3 class="text-lg font-semibold mb-2">Administrar Categorías</h3>
+      <ul id="categoriesList" class="list-disc list-inside mb-4"></ul>
+      <input type="text" id="newCategoryInput" placeholder="Nueva categoría" class="form-input mb-2" />
+      <button id="addCategoryBtn" class="btn-primary text-sm px-3 py-1">Agregar Categoría</button>
     </div>
 
     <!-- Gráfico -->
@@ -128,6 +161,10 @@
     let entries = [];
     let expensesChart;
     let editingId = null;
+
+    // Categorías iniciales por defecto
+    const defaultCategories = ['Comida', 'Transporte', 'Entretenimiento', 'Vivienda', 'Salud'];
+    let categories = [];
 
     function setDefaultDate() {
       const today = new Date();
@@ -329,8 +366,100 @@
       }
     });
 
+    // Gestión de categorías
+
+    // Cargar categorías desde localStorage o usar las por defecto
+    function loadCategories() {
+      const saved = localStorage.getItem('categories');
+      if (saved) {
+        categories = JSON.parse(saved);
+      } else {
+        categories = [...defaultCategories];
+      }
+      updateCategoriesUI();
+      updateCategorySelect();
+    }
+
+    // Guardar categorías en localStorage
+    function saveCategories() {
+      localStorage.setItem('categories', JSON.stringify(categories));
+    }
+
+    // Actualizar la lista visible de categorías en el panel
+    function updateCategoriesUI() {
+      const list = document.getElementById('categoriesList');
+      list.innerHTML = '';
+      categories.forEach(cat => {
+        const li = document.createElement('li');
+        li.textContent = cat;
+        // Botón eliminar categoría
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Eliminar';
+        delBtn.addEventListener('click', () => {
+          if (confirm(`¿Eliminar categoría "${cat}"? Esto no eliminará entradas existentes.`)) {
+            categories = categories.filter(c => c !== cat);
+            saveCategories();
+            updateCategoriesUI();
+            updateCategorySelect();
+          }
+        });
+        li.appendChild(delBtn);
+        list.appendChild(li);
+      });
+    }
+
+    // Actualizar el select de categorías en el formulario
+    function updateCategorySelect() {
+      const select = document.getElementById('category');
+      const currentValue = select.value;
+      select.innerHTML = '<option value="">Seleccionar Categoría</option>';
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        select.appendChild(option);
+      });
+      // Restaurar valor seleccionado si existe
+      if (categories.includes(currentValue)) {
+        select.value = currentValue;
+      } else {
+        select.value = '';
+      }
+    }
+
+    // Agregar nueva categoría
+    document.getElementById('addCategoryBtn').addEventListener('click', () => {
+      const input = document.getElementById('newCategoryInput');
+      const newCat = input.value.trim();
+      if (newCat === '') {
+        alert('Ingrese un nombre para la categoría.');
+        return;
+      }
+      if (categories.includes(newCat)) {
+        alert('La categoría ya existe.');
+        return;
+      }
+      categories.push(newCat);
+      saveCategories();
+      updateCategoriesUI();
+      updateCategorySelect();
+      input.value = '';
+    });
+
+    // Mostrar/ocultar panel categorías
+    document.getElementById('toggleCategoriesBtn').addEventListener('click', () => {
+      const panel = document.getElementById('categoriesPanel');
+      if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+      } else {
+        panel.style.display = 'none';
+      }
+    });
+
+    // Inicialización
     document.addEventListener('DOMContentLoaded', () => {
       setDefaultDate();
+      loadCategories();
       fetchEntries();
     });
   </script>
