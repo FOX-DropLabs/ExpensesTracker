@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Registro de Gastos e Ingresos - Pesos Argentinos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    .card {
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .form-input {
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+    }
+    .btn-primary {
+      background: #4f46e5;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+    .btn-primary:hover {
+      background: #3730a3;
+    }
+    .summary-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    canvas {
+      max-width: 100%;
+      background: white;
+      border-radius: 15px;
+    }
+  </style>
+</head>
+<body class="p-4">
+  <div class="container mx-auto max-w-4xl">
+    <h1 class="text-3xl font-bold text-white text-center mb-6">Registro de Gastos e Ingresos Mensuales</h1>
+    
+    <!-- Resumen -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="card bg-white p-4 summary-card">
+        <h3 class="font-semibold">Total Ingresos</h3>
+        <p id="totalIncome" class="text-2xl font-bold text-green-600">$0 ARS</p>
+      </div>
+      <div class="card bg-white p-4 summary-card">
+        <h3 class="font-semibold">Total Gastos</h3>
+        <p id="totalExpenses" class="text-2xl font-bold text-red-600">$0 ARS</p>
+      </div>
+      <div class="card bg-white p-4 summary-card">
+        <h3 class="font-semibold">Balance</h3>
+        <p id="balance" class="text-2xl font-bold">$0 ARS</p>
+      </div>
+    </div>
+    
+    <!-- Formulario -->
+    <div class="card bg-white p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4">Agregar Entrada</h2>
+      <form id="entryForm">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <select id="type" class="form-input">
+            <option value="gasto">Gasto</option>
+            <option value="ingreso">Ingreso</option>
+          </select>
+          <input type="number" id="amount" placeholder="Monto (ARS)" class="form-input" required />
+          <select id="category" class="form-input">
+            <option value="">Seleccionar Categoría</option>
+            <option value="Comida">Comida</option>
+            <option value="Transporte">Transporte</option>
+            <option value="Entretenimiento">Entretenimiento</option>
+            <option value="Vivienda">Vivienda</option>
+            <option value="Salud">Salud</option>
+          </select>
+          <input type="date" id="date" class="form-input" required />
+          <textarea id="comment" placeholder="Comentario (opcional)" class="form-input col-span-2" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn-primary mt-4">Agregar</button>
+      </form>
+    </div>
+    
+    <!-- Gráfico -->
+    <div class="card bg-white p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4">Distribución de Gastos por Categoría</h2>
+      <canvas id="expensesChart"></canvas>
+    </div>
+    
+    <!-- Lista -->
+    <div class="card bg-white p-6">
+      <h2 class="text-xl font-semibold mb-4">Entradas Recientes</h2>
+      <ul id="entriesList" class="list-disc list-inside space-y-2"></ul>
+    </div>
+  </div>
+  
+  <script>
+    const API_URL = "https://sheetdb.io/api/v1/5b0et060artk7"; // reemplazar con tu URL de SheetDB
+    let entries = [];
+    let expensesChart;
+
+    function setDefaultDate() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      document.getElementById('date').value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    async function fetchEntries() {
+      const res = await fetch(API_URL);
+      entries = await res.json();
+      updateUI();
+    }
+
+    async function addEntry(entry) {
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: [entry] })
+      });
+      fetchEntries();
+    }
+
+    function updateUI() {
+      const list = document.getElementById('entriesList');
+      list.innerHTML = '';
+      entries.forEach(e => {
+        const li = document.createElement('li');
+        li.textContent = `${new Date(e.Fecha).toLocaleDateString()} - ${e.Descripción}: $${e.Monto} ARS (${e.Categoría}) ${e.Comentario ? '- ' + e.Comentario : ''}`;
+        list.appendChild(li);
+      });
+      updateSummary();
+      updateChart();
+    }
+
+    function updateSummary() {
+      const totalIncome = entries.filter(e => e.Tipo === 'ingreso').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
+      const totalExpenses = entries.filter(e => e.Tipo === 'gasto').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
+      const balance = totalIncome - totalExpenses;
+      
+      document.getElementById('totalIncome').textContent = `$${totalIncome.toLocaleString()} ARS`;
+      document.getElementById('totalExpenses').textContent = `$${totalExpenses.toLocaleString()} ARS`;
+      const balanceEl = document.getElementById('balance');
+      balanceEl.textContent = `$${balance.toLocaleString()} ARS`;
+      balanceEl.classList.toggle('text-green-600', balance >= 0);
+      balanceEl.classList.toggle('text-red-600', balance < 0);
+    }
+
+    function updateChart() {
+      const totals = {};
+      entries.filter(e => e.Tipo === 'gasto').forEach(e => {
+        totals[e.Categoría] = (totals[e.Categoría] || 0) + parseFloat(e.Monto || 0);
+      });
+      const labels = Object.keys(totals);
+      const data = labels.map(l => totals[l]);
+      if (expensesChart) expensesChart.destroy();
+      expensesChart = new Chart(document.getElementById('expensesChart'), {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: ['#ff6384','#36a2eb','#cc65fe','#ffce56','#4bc0c0']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { title: { display: true, text: 'Distribución de Gastos' } }
+        }
+      });
+    }
+
+    document.getElementById('entryForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const type = document.getElementById('type').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const category = document.getElementById('category').value;
+      const date = document.getElementById('date').value;
+      const comment = document.getElementById('comment').value;
+      
+      if (amount && date && category) {
+        const newEntry = {
+          Tipo: type,
+          Descripción: type === 'gasto' ? 'Gasto' : 'Ingreso',
+          Monto: amount,
+          Categoría: category,
+          Fecha: date,
+          Comentario: comment
+        };
+        addEntry(newEntry);
+        this.reset();
+        setDefaultDate();
+      } else {
+        alert('Por favor, complete todos los campos requeridos.');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setDefaultDate();
+      fetchEntries();
+    });
+  </script>
+</body>
+</html>
