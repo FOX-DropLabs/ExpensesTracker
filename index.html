@@ -163,7 +163,7 @@
 
     async function updateEntry(id, data) {
       try {
-        await fetch(`${API_URL}/${id}`, {
+        await fetch(`${API_URL}/id/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data: [data] })
@@ -176,7 +176,7 @@
 
     async function deleteEntry(id) {
       try {
-        await fetch(`${API_URL}/${id}`, {
+        await fetch(`${API_URL}/id/${id}`, {
           method: 'DELETE'
         });
       } catch (error) {
@@ -206,8 +206,8 @@
         const li = document.createElement('li');
         li.innerHTML = `
           ${new Date(e.Fecha).toLocaleDateString()} - ${e.Descripción}: $${parseFloat(e.Monto).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS (${e.Categoría}) ${e.Comentario ? '- ' + e.Comentario : ''}
-          <button class="edit-btn" data-id="${e._id}">Editar</button>
-          <button class="delete-btn" data-id="${e._id}">Eliminar</button>
+          <button class="edit-btn" data-id="${e.id}">Editar</button>
+          <button class="delete-btn" data-id="${e.id}">Eliminar</button>
         `;
         list.appendChild(li);
       });
@@ -258,7 +258,7 @@
     document.getElementById('entriesList').addEventListener('click', async (event) => {
       if (event.target.classList.contains('edit-btn')) {
         const id = event.target.dataset.id;
-        const entry = entries.find(e => e._id === id);
+        const entry = entries.find(e => e.id === id);
         if (entry) {
           populateFormForEdit(entry);
         }
@@ -272,7 +272,7 @@
     });
 
     function populateFormForEdit(entry) {
-      editingId = entry._id;
+      editingId = entry.id;
       document.getElementById('type').value = entry.Tipo;
       document.getElementById('amount').value = entry.Monto;
       document.getElementById('category').value = entry.Categoría;
@@ -306,6 +306,7 @@
 
       if (amount && date && category) {
         const entryData = {
+          id: editingId || Date.now().toString(), // genera id nuevo si no está editando
           Tipo: type,
           Descripción: type === 'gasto' ? 'Gasto' : 'Ingreso',
           Monto: amount,
