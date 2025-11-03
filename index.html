@@ -164,7 +164,7 @@
   </div>
 
   <script>
-    const API_URL = "https://sheetdb.io/api/v1/5b0et060artk7"; // reemplazar con tu URL de SheetDB
+    const API_URL = "https://sheetdb.io/api/v1/5b0et060artk7"; // Verifica que esta URL sea correcta
     let entries = [];
     let expensesChart;
     let editingId = null;
@@ -186,56 +186,77 @@
 
     async function fetchEntries() {
       try {
+        console.log('Cargando entradas desde:', API_URL);
         const res = await fetch(API_URL);
+        if (!res.ok) {
+          throw new Error(`Error HTTP: ${res.status}`);
+        }
         entries = await res.json();
+        console.log('Entradas cargadas:', entries);
         fetchCategories();
         updateUI();
       } catch (error) {
-        alert('Error al cargar las entradas. Intenta recargar la página.');
-        console.error(error);
+        console.error('Error al cargar las entradas:', error);
+        alert('Error al cargar las entradas. Verifica la consola para detalles.');
       }
     }
 
     async function addEntry(entry) {
       try {
-        await fetch(API_URL, {
+        console.log('Agregando entrada:', entry);
+        const res = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ data: [entry] })
         });
+        if (!res.ok) {
+          throw new Error(`Error al agregar: ${res.status}`);
+        }
+        console.log('Entrada agregada exitosamente');
       } catch (error) {
+        console.error('Error al agregar la entrada:', error);
         alert('Error al agregar la entrada.');
-        console.error(error);
       }
     }
 
     async function updateEntry(id, data) {
       try {
-        await fetch(`${API_URL}/${id}`, {
+        console.log('Actualizando entrada ID:', id, 'con datos:', data);
+        const res = await fetch(`${API_URL}/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data: [data] })
         });
+        if (!res.ok) {
+          throw new Error(`Error al actualizar: ${res.status}`);
+        }
+        console.log('Entrada actualizada exitosamente');
       } catch (error) {
+        console.error('Error al actualizar la entrada:', error);
         alert('Error al actualizar la entrada.');
-        console.error(error);
       }
     }
 
     async function deleteEntry(id) {
       try {
-        await fetch(`${API_URL}/${id}`, {
+        console.log('Eliminando entrada ID:', id);
+        const res = await fetch(`${API_URL}/${id}`, {
           method: 'DELETE'
         });
+        if (!res.ok) {
+          throw new Error(`Error al eliminar: ${res.status}`);
+        }
+        console.log('Entrada eliminada exitosamente');
       } catch (error) {
+        console.error('Error al eliminar la entrada:', error);
         alert('Error al eliminar la entrada.');
-        console.error(error);
       }
     }
 
     function fetchCategories() {
       const uniqueCategories = [...new Set(entries.map(e => e.Categoría).filter(c => c))];
       categories = uniqueCategories.length > 0 ? uniqueCategories : [...defaultCategories];
+      console.log('Categorías extraídas:', categories);
       updateCategoriesUI();
       updateCategorySelect();
     }
@@ -255,6 +276,7 @@
       if (selectedMonth) {
         filteredEntries = entries.filter(e => e.Fecha.startsWith(selectedMonth));
       }
+      console.log('Entradas filtradas:', filteredEntries);
 
       // Agrupar por categoría
       const grouped = {};
@@ -291,6 +313,7 @@
       const totalIncome = filteredEntries.filter(e => e.Tipo === 'ingreso').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
       const totalExpenses = filteredEntries.filter(e => e.Tipo === 'gasto').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
       const balance = totalIncome - totalExpenses;
+      console.log('Totales calculados - Ingresos:', totalIncome, 'Gastos:', totalExpenses, 'Balance:', balance);
       document.getElementById('totalIncome').textContent = `$${totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
       document.getElementById('totalExpenses').textContent = `$${totalExpenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
       const balanceEl = document.getElementById('balance');
@@ -304,6 +327,7 @@
       filteredEntries.filter(e => e.Tipo === 'gasto').forEach(e => {
         totals[e.Categoría] = (totals[e.Categoría] || 0) + parseFloat(e.Monto || 0);
       });
+      console.log('Datos del gráfico:', totals);
       const labels = Object.keys(totals);
       const data = labels.map(l => totals[l]);
       if (expensesChart) expensesChart.destroy();
@@ -402,36 +426,3 @@
     // Gestión de categorías
 
     // Actualizar la lista visible de categorías en el panel
-    function updateCategoriesUI() {
-      const list = document.getElementById('categoriesList');
-      list.innerHTML = '';
-      categories.forEach(cat => {
-        const li = document.createElement('li');
-        li.textContent = cat;
-        // Botón eliminar categoría
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Eliminar';
-        delBtn.addEventListener('click', () => {
-          const hasEntries = entries.some(e => e.Categoría === cat);
-          if (hasEntries) {
-            alert('No puedes eliminar una categoría que tiene entradas asociadas.');
-            return;
-          }
-          if (confirm(`¿Eliminar categoría "${cat}"?`)) {
-            categories = categories.filter(c => c !== cat);
-            updateCategoriesUI();
-            updateCategorySelect();
-          }
-        });
-        li.appendChild(delBtn);
-        list.appendChild(li);
-      });
-    }
-
-    // Actualizar el select de categorías en el formulario
-    function updateCategorySelect() {
-      const select = document.getElementById('category');
-      const currentValue = select.value;
-      select.innerHTML = '<option value="">Seleccionar Categoría</option>';
-      categories.forEach(cat => {
-        const
