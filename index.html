@@ -22,6 +22,7 @@
       border-radius: 8px;
       border: 1px solid #ddd;
       padding: 0.5rem;
+      width: 100%;
     }
     .btn-primary {
       background: #4f46e5;
@@ -49,15 +50,16 @@
       margin-left: 0.5rem;
     }
     .edit-btn {
-      color: #2563eb; /* azul */
+      color: #2563eb;
       text-decoration: underline;
     }
     .delete-btn {
-      color: #dc2626; /* rojo */
+      color: #dc2626;
       text-decoration: underline;
     }
   </style>
 </head>
+
 <body class="p-4">
   <div class="container mx-auto max-w-4xl">
     <h1 class="text-3xl font-bold text-white text-center mb-6">Registro de Gastos e Ingresos Mensuales</h1>
@@ -93,15 +95,17 @@
             <option value="gasto">Gasto</option>
             <option value="ingreso">Ingreso</option>
           </select>
+
           <input type="number" id="amount" placeholder="Monto (ARS)" class="form-input" required min="0.01" step="0.01" />
-          <select id="category" class="form-input" required>
-            <option value="">Seleccionar Categoría</option>
-            <option value="Comida">Comida</option>
-            <option value="Transporte">Transporte</option>
-            <option value="Entretenimiento">Entretenimiento</option>
-            <option value="Vivienda">Vivienda</option>
-            <option value="Salud">Salud</option>
-          </select>
+
+          <!-- Selector de categoría con botón para agregar -->
+          <div class="flex gap-2 items-center">
+            <select id="category" class="form-input flex-grow" required>
+              <option value="">Seleccionar Categoría</option>
+            </select>
+            <button type="button" id="addCategoryBtn" class="btn-primary bg-green-600 hover:bg-green-700">+</button>
+          </div>
+
           <input type="date" id="date" class="form-input" required />
           <textarea id="comment" placeholder="Comentario (opcional)" class="form-input col-span-2" rows="2"></textarea>
         </div>
@@ -124,7 +128,7 @@
   </div>
 
   <script>
-    const API_URL = "https://sheetdb.io/api/v1/5b0et060artk7"; // reemplazar con tu URL de SheetDB
+    const API_URL = "https://sheetdb.io/api/v1/5b0et060artk7"; // tu URL de SheetDB
     let entries = [];
     let expensesChart;
     let editingId = null;
@@ -141,6 +145,7 @@
       try {
         const res = await fetch(API_URL);
         entries = await res.json();
+        updateCategoryList(); // <-- actualiza categorías dinámicamente
         updateUI();
       } catch (error) {
         alert('Error al cargar las entradas. Intenta recargar la página.');
@@ -176,9 +181,7 @@
 
     async function deleteEntry(id) {
       try {
-        await fetch(`${API_URL}/${id}`, {
-          method: 'DELETE'
-        });
+        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
       } catch (error) {
         alert('Error al eliminar la entrada.');
         console.error(error);
@@ -186,7 +189,6 @@
     }
 
     const monthFilter = document.getElementById('monthFilter');
-
     monthFilter.addEventListener('change', () => {
       updateUI();
     });
@@ -196,7 +198,6 @@
       list.innerHTML = '';
 
       const selectedMonth = monthFilter.value;
-
       let filteredEntries = entries;
       if (selectedMonth) {
         filteredEntries = entries.filter(e => e.Fecha.startsWith(selectedMonth));
@@ -205,8 +206,10 @@
       filteredEntries.forEach(e => {
         const li = document.createElement('li');
         li.innerHTML = `
-          ${new Date(e.Fecha).toLocaleDateString()} - ${e.Descripción}: $${parseFloat(e.Monto).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS (${e.Categoría}) ${e.Comentario ? '- ' + e.Comentario : ''}
-          <button class="edit-btn" data-id="${e._id}">Editar</button>
+          ${new Date(e.Fecha).toLocaleDateString()} - ${e.Descripción}: 
+          $${parseFloat(e.Monto).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS 
+          (${e.Categoría}) ${e.Comentario ? '- ' + e.Comentario : ''} 
+          <button class="edit-btn" data-id="${e._id}">Editar</button> 
           <button class="delete-btn" data-id="${e._id}">Eliminar</button>
         `;
         list.appendChild(li);
@@ -220,8 +223,10 @@
       const totalIncome = filteredEntries.filter(e => e.Tipo === 'ingreso').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
       const totalExpenses = filteredEntries.filter(e => e.Tipo === 'gasto').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
       const balance = totalIncome - totalExpenses;
+
       document.getElementById('totalIncome').textContent = `$${totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
       document.getElementById('totalExpenses').textContent = `$${totalExpenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
+
       const balanceEl = document.getElementById('balance');
       balanceEl.textContent = `$${balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
       balanceEl.classList.toggle('text-green-600', balance >= 0);
@@ -233,28 +238,62 @@
       filteredEntries.filter(e => e.Tipo === 'gasto').forEach(e => {
         totals[e.Categoría] = (totals[e.Categoría] || 0) + parseFloat(e.Monto || 0);
       });
+
       const labels = Object.keys(totals);
       const data = labels.map(l => totals[l]);
+
       if (expensesChart) expensesChart.destroy();
       expensesChart = new Chart(document.getElementById('expensesChart'), {
         type: 'pie',
         data: {
           labels: labels,
-          datasets: [{
-            data: data,
-            backgroundColor: ['#ff6384','#36a2eb','#cc65fe','#ffce56','#4bc0c0']
+          datasets: [{ 
+            data: data, 
+            backgroundColor: ['#ff6384','#36a2eb','#cc65fe','#ffce56','#4bc0c0'] 
           }]
         },
         options: {
           responsive: true,
-          plugins: {
-            title: { display: true, text: 'Distribución de Gastos' }
-          }
+          plugins: { title: { display: true, text: 'Distribución de Gastos' } }
         }
       });
     }
 
-    // Manejo de botones Editar y Eliminar con delegación
+    // Genera lista de categorías únicas desde las entradas
+    function updateCategoryList() {
+      const categorySelect = document.getElementById('category');
+      const allCategories = entries.map(e => e.Categoría).filter(Boolean);
+      const uniqueCategories = [...new Set(allCategories)].sort();
+
+      categorySelect.innerHTML = '<option value="">Seleccionar Categoría</option>';
+      uniqueCategories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categorySelect.appendChild(option);
+      });
+    }
+
+    // Permite agregar nuevas categorías
+    document.getElementById('addCategoryBtn').addEventListener('click', () => {
+      const newCat = prompt('Ingrese el nombre de la nueva categoría:');
+      if (newCat && newCat.trim() !== '') {
+        const categorySelect = document.getElementById('category');
+        const exists = Array.from(categorySelect.options).some(opt => opt.value.toLowerCase() === newCat.trim().toLowerCase());
+        if (!exists) {
+          const option = document.createElement('option');
+          option.value = newCat.trim();
+          option.textContent = newCat.trim();
+          categorySelect.appendChild(option);
+          categorySelect.value = newCat.trim();
+          alert('Categoría agregada localmente. Se guardará al registrar una nueva entrada.');
+        } else {
+          alert('Esa categoría ya existe.');
+        }
+      }
+    });
+
+    // Editar y eliminar
     document.getElementById('entriesList').addEventListener('click', async (event) => {
       if (event.target.classList.contains('edit-btn')) {
         const id = event.target.dataset.id;
@@ -322,6 +361,7 @@
           this.reset();
           setDefaultDate();
         }
+
         await fetchEntries();
       } else {
         alert('Por favor, complete todos los campos requeridos.');
