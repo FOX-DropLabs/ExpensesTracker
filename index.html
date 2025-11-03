@@ -165,7 +165,6 @@
 
   <script>
     const API_URL = "https://sheetdb.io/api/v1/5b0et060artk7"; // ajusta con tu URL
-    const CATEGORIES_API_URL = "https://sheetdb.io/api/v1/5b0et060artk7/sheet/Categorias"; // ajusta con tu URL para categorías
     let entries = [];
     let expensesChart;
     let editingId = null;
@@ -189,10 +188,18 @@
       try {
         const res = await fetch(API_URL);
         entries = await res.json();
+        // Extraer categorías únicas de las entradas
+        const uniqueCategories = [...new Set(entries.map(e => e.Categoría).filter(c => c))];
+        categories = uniqueCategories.length > 0 ? uniqueCategories : [...defaultCategories];
+        updateCategoriesUI();
+        updateCategorySelect();
         updateUI();
       } catch (error) {
         alert('Error al cargar las entradas. Intenta recargar la página.');
         console.error(error);
+        categories = [...defaultCategories];
+        updateCategoriesUI();
+        updateCategorySelect();
       }
     }
 
@@ -229,48 +236,6 @@
         });
       } catch (error) {
         alert('Error al eliminar la entrada.');
-        console.error(error);
-      }
-    }
-
-    async function fetchCategories() {
-      try {
-        const res = await fetch(CATEGORIES_API_URL);
-        const data = await res.json();
-        categories = data.map(c => c.Nombre);
-        updateCategoriesUI();
-        updateCategorySelect();
-      } catch (error) {
-        console.error('Error al cargar categorías:', error);
-        categories = [...defaultCategories];
-        updateCategoriesUI();
-        updateCategorySelect();
-      }
-    }
-
-    async function addCategoryToDB(name) {
-      try {
-        await fetch(CATEGORIES_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: [{ id: Date.now().toString(), Nombre: name }] })
-        });
-      } catch (error) {
-        alert('Error al agregar categoría.');
-        console.error(error);
-      }
-    }
-
-    async function deleteCategoryFromDB(name) {
-      try {
-        const res = await fetch(CATEGORIES_API_URL);
-        const data = await res.json();
-        const cat = data.find(c => c.Nombre === name);
-        if (cat) {
-          await fetch(`${CATEGORIES_API_URL}/id/${cat.id}`, { method: 'DELETE' });
-        }
-      } catch (error) {
-        alert('Error al eliminar categoría.');
         console.error(error);
       }
     }
@@ -317,10 +282,133 @@
         catDiv.appendChild(ul);
         list.appendChild(catDiv);
       });
+
+      updateSummary(filteredEntries);
+      updateChart(filteredEntries);
     }
 
     function updateSummary(filteredEntries) {
       const totalIncome = filteredEntries.filter(e => e.Tipo === 'ingreso').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
       const totalExpenses = filteredEntries.filter(e => e.Tipo === 'gasto').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
       const balance = totalIncome - totalExpenses;
-      document.getElementById('totalIncome').textContent = `$${totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits
+      document.getElementById('totalIncome').textContent = `$${totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
+      document.getElementById('totalExpenses').textContent = `$${totalExpenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
+      const balanceEl = document.getElementById('balance');
+      balanceEl.textContent = `$${balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
+      balanceEl.classList.toggle('text-green-600', balance >= 0);
+      balanceEl.classList.toggle('text-red-600', balance < 0);
+    }
+
+    function updateChart(filteredEntries) {
+      const totals = {};
+      filteredEntries.filter(e => e.Tipo === 'gasto').forEach(e => {
+        totals[e.Categoría] = (totals[e.Categoría] || 0) + parseFloat(e.Monto || 0);
+      });
+      const labels = Object.keys(totals);
+      const data = labels.map(l => totals[l]);
+      if (expensesChart) expensesChart.destroy();
+      expensesChart = new Chart(document.getElementById('expensesChart'), {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: ['#ff6384','#36a2eb','#cc65fe','#ffce56','#4bc0c0']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: { display: true, text: 'Distribución de Gastos' }
+          }
+        }
+      });
+    }
+
+    // Manejo de botones Editar y Eliminar con delegación
+    document.getElementById('entriesList').addEventListener('click', async (event) => {
+      if (event.target.classList.contains('edit-btn')) {
+        const id = event.target.dataset.id;
+        const entry = entries.find(e => e.id === id);
+        if (entry) {
+          populateFormForEdit(entry);
+        }
+      } else if (event.target.classList.contains('delete-btn')) {
+        const id = event.target.dataset.id;
+        if (confirm('¿Seguro que quieres eliminar esta entrada?')) {
+          await deleteEntry(id);
+          await fetchEntries();
+        }
+      }
+    });
+
+    function populateFormForEdit(entry) {
+      editingId = entry.id;
+      document.getElementById('type').value = entry.Tipo;
+      document.getElementById('amount').value = entry.Monto;
+      document.getElementById('category').value = entry.Categoría;
+      document.getElementById('date').value = entry.Fecha;
+      document.getElementById('comment').value = entry.Comentario || '';
+      document.getElementById('formTitle').textContent = 'Editar Entrada';
+      document.getElementById('submitBtn').textContent = 'Guardar Cambios';
+      document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    }
+
+    document.getElementById('cancelEditBtn').addEventListener('click', () => {
+      resetForm();
+    });
+
+    function resetForm() {
+      editingId = null;
+      document.getElementById('entryForm').reset();
+      setDefaultDate();
+      document.getElementById('formTitle').textContent = 'Agregar Entrada';
+      document.getElementById('submitBtn').textContent = 'Agregar';
+      document.getElementById('cancelEditBtn').style.display = 'none';
+    }
+
+    document.getElementById('entryForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const type = document.getElementById('type').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const category = document.getElementById('category').value;
+      const date = document.getElementById('date').value;
+      const comment = document.getElementById('comment').value;
+
+      if (amount && date && category) {
+        const entryData = {
+          id: editingId || Date.now().toString(), // genera id nuevo si no está editando
+          Tipo: type,
+          Descripción: type === 'gasto' ? 'Gasto' : 'Ingreso',
+          Monto: amount,
+          Categoría: category,
+          Fecha: date,
+          Comentario: comment
+        };
+
+        if (editingId) {
+          await updateEntry(editingId, entryData);
+          resetForm();
+        } else {
+          await addEntry(entryData);
+          this.reset();
+          setDefaultDate();
+        }
+        await fetchEntries();
+      } else {
+        alert('Por favor, complete todos los campos requeridos.');
+      }
+    });
+
+    // Gestión de categorías (solo local, basada en entradas)
+    function updateCategoriesUI() {
+      const list = document.getElementById('categoriesList');
+      list.innerHTML = '';
+      categories.forEach(cat => {
+        const li = document.createElement('li');
+        li.textContent = cat;
+        // Botón eliminar categoría
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Eliminar';
+        delBtn.addEventListener('click', () => {
+          if (confirm
