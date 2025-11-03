@@ -188,18 +188,11 @@
       try {
         const res = await fetch(API_URL);
         entries = await res.json();
-        // Extraer categorías únicas de las entradas
-        const uniqueCategories = [...new Set(entries.map(e => e.Categoría).filter(c => c))];
-        categories = uniqueCategories.length > 0 ? uniqueCategories : [...defaultCategories];
-        updateCategoriesUI();
-        updateCategorySelect();
+        fetchCategories();
         updateUI();
       } catch (error) {
         alert('Error al cargar las entradas. Intenta recargar la página.');
         console.error(error);
-        categories = [...defaultCategories];
-        updateCategoriesUI();
-        updateCategorySelect();
       }
     }
 
@@ -238,6 +231,13 @@
         alert('Error al eliminar la entrada.');
         console.error(error);
       }
+    }
+
+    function fetchCategories() {
+      const uniqueCategories = [...new Set(entries.map(e => e.Categoría).filter(c => c))];
+      categories = uniqueCategories.length > 0 ? uniqueCategories : [...defaultCategories];
+      updateCategoriesUI();
+      updateCategorySelect();
     }
 
     const monthFilter = document.getElementById('monthFilter');
@@ -360,55 +360,4 @@
 
     function resetForm() {
       editingId = null;
-      document.getElementById('entryForm').reset();
-      setDefaultDate();
-      document.getElementById('formTitle').textContent = 'Agregar Entrada';
-      document.getElementById('submitBtn').textContent = 'Agregar';
-      document.getElementById('cancelEditBtn').style.display = 'none';
-    }
-
-    document.getElementById('entryForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const type = document.getElementById('type').value;
-      const amount = parseFloat(document.getElementById('amount').value);
-      const category = document.getElementById('category').value;
-      const date = document.getElementById('date').value;
-      const comment = document.getElementById('comment').value;
-
-      if (amount && date && category) {
-        const entryData = {
-          id: editingId || Date.now().toString(), // genera id nuevo si no está editando
-          Tipo: type,
-          Descripción: type === 'gasto' ? 'Gasto' : 'Ingreso',
-          Monto: amount,
-          Categoría: category,
-          Fecha: date,
-          Comentario: comment
-        };
-
-        if (editingId) {
-          await updateEntry(editingId, entryData);
-          resetForm();
-        } else {
-          await addEntry(entryData);
-          this.reset();
-          setDefaultDate();
-        }
-        await fetchEntries();
-      } else {
-        alert('Por favor, complete todos los campos requeridos.');
-      }
-    });
-
-    // Gestión de categorías (solo local, basada en entradas)
-    function updateCategoriesUI() {
-      const list = document.getElementById('categoriesList');
-      list.innerHTML = '';
-      categories.forEach(cat => {
-        const li = document.createElement('li');
-        li.textContent = cat;
-        // Botón eliminar categoría
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Eliminar';
-        delBtn.addEventListener('click', () => {
-          if (confirm
+      document.getElementById('
