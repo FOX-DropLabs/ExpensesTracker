@@ -2,376 +2,276 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Registro de Gastos e Ingresos - Pesos Argentinos</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control de Gastos</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      color: #333;
-    }
-    .card {
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }
-    .form-input {
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      padding: 0.5rem;
-      width: 100%;
-    }
-    .btn-primary {
-      background: #4f46e5;
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      transition: background 0.3s;
-    }
-    .btn-primary:hover {
-      background: #3730a3;
-    }
-    .summary-card {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    canvas {
-      max-width: 100%;
-      background: white;
-      border-radius: 15px;
-    }
-    .edit-btn, .delete-btn {
-      cursor: pointer;
-      font-size: 0.9rem;
-      margin-left: 0.5rem;
-    }
-    .edit-btn {
-      color: #2563eb;
-      text-decoration: underline;
-    }
-    .delete-btn {
-      color: #dc2626;
-      text-decoration: underline;
-    }
-  </style>
 </head>
+<body class="bg-gray-100 p-4">
+  <div class="max-w-3xl mx-auto bg-white shadow-lg rounded-2xl p-6">
+    <h1 class="text-2xl font-bold mb-4 text-center">💰 Control de Gastos</h1>
 
-<body class="p-4">
-  <div class="container mx-auto max-w-4xl">
-    <h1 class="text-3xl font-bold text-white text-center mb-6">Registro de Gastos e Ingresos Mensuales</h1>
+    <!-- Formulario -->
+    <form id="expenseForm" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="type" class="block font-medium">Tipo</label>
+          <select id="type" class="form-select w-full border rounded-lg p-2">
+            <option value="Gasto">Gasto</option>
+            <option value="Ingreso">Ingreso</option>
+          </select>
+        </div>
 
-    <!-- Selector de mes -->
-    <div class="mb-4">
-      <label for="monthFilter" class="text-white font-semibold mr-2">Filtrar por mes:</label>
-      <input type="month" id="monthFilter" class="form-input" />
+        <div>
+          <label for="amount" class="block font-medium">Monto</label>
+          <input type="number" id="amount" class="form-input w-full border rounded-lg p-2" required />
+        </div>
+
+        <div>
+          <label for="category" class="block font-medium">Categoría</label>
+          <div class="flex gap-2 items-center">
+            <select id="category" class="form-select w-full border rounded-lg p-2" required></select>
+            <button type="button" id="addCategoryBtn" class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700">+</button>
+          </div>
+        </div>
+
+        <div>
+          <label for="date" class="block font-medium">Fecha</label>
+          <input type="date" id="date" class="form-input w-full border rounded-lg p-2" required />
+        </div>
+      </div>
+
+      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-semibold">
+        Agregar
+      </button>
+    </form>
+
+    <!-- Filtros -->
+    <div class="mt-6 flex justify-between items-center">
+      <label for="monthFilter" class="font-medium">Mes:</label>
+      <select id="monthFilter" class="form-select border rounded-lg p-2"></select>
     </div>
 
     <!-- Resumen -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="card bg-white p-4 summary-card">
-        <h3 class="font-semibold">Total Ingresos</h3>
-        <p id="totalIncome" class="text-2xl font-bold text-green-600">$0 ARS</p>
-      </div>
-      <div class="card bg-white p-4 summary-card">
-        <h3 class="font-semibold">Total Gastos</h3>
-        <p id="totalExpenses" class="text-2xl font-bold text-red-600">$0 ARS</p>
-      </div>
-      <div class="card bg-white p-4 summary-card">
-        <h3 class="font-semibold">Balance</h3>
-        <p id="balance" class="text-2xl font-bold">$0 ARS</p>
-      </div>
+    <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+      <h2 class="text-lg font-bold mb-2">Resumen</h2>
+      <p id="totalIncome" class="text-green-700 font-semibold"></p>
+      <p id="totalExpense" class="text-red-700 font-semibold"></p>
+      <p id="totalBalance" class="text-blue-700 font-semibold"></p>
     </div>
 
-    <!-- Formulario -->
-    <div class="card bg-white p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-4" id="formTitle">Agregar Entrada</h2>
-      <form id="entryForm">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <select id="type" class="form-input" required>
-            <option value="gasto">Gasto</option>
-            <option value="ingreso">Ingreso</option>
-          </select>
-
-          <input type="number" id="amount" placeholder="Monto (ARS)" class="form-input" required min="0.01" step="0.01" />
-
-          <!-- Selector de categoría con botón para agregar -->
-          <div class="flex gap-2 items-center">
-            <select id="category" class="form-input flex-grow" required>
-              <option value="">Seleccionar Categoría</option>
-            </select>
-            <button type="button" id="addCategoryBtn" class="btn-primary bg-green-600 hover:bg-green-700">+</button>
-          </div>
-
-          <input type="date" id="date" class="form-input" required />
-          <textarea id="comment" placeholder="Comentario (opcional)" class="form-input col-span-2" rows="2"></textarea>
-        </div>
-        <button type="submit" class="btn-primary mt-4" id="submitBtn">Agregar</button>
-        <button type="button" class="btn-primary mt-4 ml-4 bg-gray-500 hover:bg-gray-700" id="cancelEditBtn" style="display:none;">Cancelar</button>
-      </form>
+    <!-- Entradas -->
+    <div class="mt-6">
+      <h2 class="text-lg font-bold mb-2">Entradas Recientes</h2>
+      <table class="w-full border">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="p-2">Fecha</th>
+            <th class="p-2">Tipo</th>
+            <th class="p-2">Monto</th>
+            <th class="p-2">Categoría</th>
+          </tr>
+        </thead>
+        <tbody id="entriesTable"></tbody>
+      </table>
     </div>
 
     <!-- Gráfico -->
-    <div class="card bg-white p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-4">Distribución de Gastos por Categoría</h2>
-      <canvas id="expensesChart"></canvas>
-    </div>
-
-    <!-- Lista -->
-    <div class="card bg-white p-6">
-      <h2 class="text-xl font-semibold mb-4">Entradas Recientes</h2>
-      <ul id="entriesList" class="list-disc list-inside space-y-2"></ul>
+    <div class="mt-8">
+      <h2 class="text-lg font-bold mb-2">Gastos por Categoría</h2>
+      <canvas id="categoryChart" height="150"></canvas>
     </div>
   </div>
 
   <script>
-    const API_URL = "https://sheetdb.io/api/v1/5b0et060artk7"; // tu URL de SheetDB
-    let entries = [];
-    let expensesChart;
-    let editingId = null;
+  const API_URL = "https://sheetdb.io/api/v1/5b0et060artk7";
+  let entries = [];
+  let categoryChart;
 
-    function setDefaultDate() {
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const dd = String(today.getDate()).padStart(2, '0');
-      document.getElementById('date').value = `${yyyy}-${mm}-${dd}`;
-    }
+  // --- Inicialización ---
+  document.addEventListener('DOMContentLoaded', () => {
+    setDefaultDate();
+    fetchEntries();
+    setMonthOptions();
+    setCurrentMonth();
+  });
 
-    async function fetchEntries() {
-      try {
-        const res = await fetch(API_URL);
-        entries = await res.json();
-        updateCategoryList(); // <-- actualiza categorías dinámicamente
-        updateUI();
-      } catch (error) {
-        alert('Error al cargar las entradas. Intenta recargar la página.');
-        console.error(error);
+  // --- Establecer fecha actual ---
+  function setDefaultDate() {
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+  }
+
+  // --- Generar meses ---
+  function setMonthOptions() {
+    const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const monthSelect = document.getElementById('monthFilter');
+    months.forEach(m => {
+      const opt = document.createElement('option');
+      opt.textContent = m;
+      opt.value = m;
+      monthSelect.appendChild(opt);
+    });
+    monthSelect.addEventListener('change', updateUI);
+  }
+
+  // --- Seleccionar mes actual ---
+  function setCurrentMonth() {
+    const monthSelect = document.getElementById('monthFilter');
+    const currentMonth = new Date().toLocaleString('es-AR', { month: 'long' });
+    const normalized = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1).toLowerCase();
+    for (let option of monthSelect.options) {
+      if (option.textContent.toLowerCase() === normalized.toLowerCase()) {
+        option.selected = true;
+        break;
       }
     }
+    updateUI();
+  }
 
-    async function addEntry(entry) {
-      try {
-        await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: [entry] })
-        });
-      } catch (error) {
-        alert('Error al agregar la entrada.');
-        console.error(error);
-      }
-    }
-
-    async function updateEntry(id, data) {
-      try {
-        await fetch(`${API_URL}/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: [data] })
-        });
-      } catch (error) {
-        alert('Error al actualizar la entrada.');
-        console.error(error);
-      }
-    }
-
-    async function deleteEntry(id) {
-      try {
-        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-      } catch (error) {
-        alert('Error al eliminar la entrada.');
-        console.error(error);
-      }
-    }
-
-    const monthFilter = document.getElementById('monthFilter');
-    monthFilter.addEventListener('change', () => {
+  // --- Cargar datos ---
+  async function fetchEntries() {
+    try {
+      const res = await fetch(API_URL);
+      entries = await res.json();
+      updateCategoryList();
       updateUI();
+    } catch (error) {
+      alert('Error al cargar las entradas.');
+      console.error(error);
+    }
+  }
+
+  // --- Actualizar UI ---
+  function updateUI() {
+    const month = document.getElementById('monthFilter').value;
+    const tbody = document.getElementById('entriesTable');
+    tbody.innerHTML = '';
+
+    const monthEntries = entries.filter(e => {
+      const entryMonth = new Date(e.Fecha).toLocaleString('es-AR', { month: 'long' });
+      return entryMonth.toLowerCase() === month.toLowerCase();
     });
 
-    function updateUI() {
-      const list = document.getElementById('entriesList');
-      list.innerHTML = '';
+    let totalIncome = 0, totalExpense = 0;
 
-      const selectedMonth = monthFilter.value;
-      let filteredEntries = entries;
-      if (selectedMonth) {
-        filteredEntries = entries.filter(e => e.Fecha.startsWith(selectedMonth));
-      }
+    monthEntries.forEach(e => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="p-2 border">${e.Fecha}</td>
+        <td class="p-2 border">${e.Tipo}</td>
+        <td class="p-2 border">$${e.Monto}</td>
+        <td class="p-2 border">${e.Categoría}</td>
+      `;
+      tbody.appendChild(tr);
 
-      filteredEntries.forEach(e => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          ${new Date(e.Fecha).toLocaleDateString()} - ${e.Descripción}: 
-          $${parseFloat(e.Monto).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS 
-          (${e.Categoría}) ${e.Comentario ? '- ' + e.Comentario : ''} 
-          <button class="edit-btn" data-id="${e._id}">Editar</button> 
-          <button class="delete-btn" data-id="${e._id}">Eliminar</button>
-        `;
-        list.appendChild(li);
+      if (e.Tipo === 'Ingreso') totalIncome += parseFloat(e.Monto);
+      else totalExpense += parseFloat(e.Monto);
+    });
+
+    document.getElementById('totalIncome').textContent = `Ingresos: $${totalIncome.toFixed(2)}`;
+    document.getElementById('totalExpense').textContent = `Gastos: $${totalExpense.toFixed(2)}`;
+    document.getElementById('totalBalance').textContent = `Balance: $${(totalIncome - totalExpense).toFixed(2)}`;
+
+    updateCategoryChart();
+  }
+
+  // --- Envío de formulario ---
+  document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newEntry = {
+      Fecha: document.getElementById('date').value,
+      Tipo: document.getElementById('type').value,
+      Monto: document.getElementById('amount').value,
+      Categoría: document.getElementById('category').value,
+    };
+
+    try {
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: [newEntry] })
       });
-
-      updateSummary(filteredEntries);
-      updateChart(filteredEntries);
+      entries.push(newEntry);
+      updateCategoryList();
+      updateUI();
+      e.target.reset();
+      setDefaultDate();
+    } catch (error) {
+      alert('Error al agregar entrada.');
     }
+  });
 
-    function updateSummary(filteredEntries) {
-      const totalIncome = filteredEntries.filter(e => e.Tipo === 'ingreso').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
-      const totalExpenses = filteredEntries.filter(e => e.Tipo === 'gasto').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
-      const balance = totalIncome - totalExpenses;
+  // --- Actualizar lista de categorías ---
+  function updateCategoryList() {
+    const categorySelect = document.getElementById('category');
+    const allCategories = entries.map(e => e.Categoría).filter(Boolean);
+    const uniqueCategories = [...new Set(allCategories)].sort();
 
-      document.getElementById('totalIncome').textContent = `$${totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
-      document.getElementById('totalExpenses').textContent = `$${totalExpenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
+    categorySelect.innerHTML = '<option value="">Seleccionar Categoría</option>';
+    uniqueCategories.forEach(cat => {
+      const option = document.createElement('option');
+      option.value = cat;
+      option.textContent = cat;
+      categorySelect.appendChild(option);
+    });
+  }
 
-      const balanceEl = document.getElementById('balance');
-      balanceEl.textContent = `$${balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ARS`;
-      balanceEl.classList.toggle('text-green-600', balance >= 0);
-      balanceEl.classList.toggle('text-red-600', balance < 0);
-    }
-
-    function updateChart(filteredEntries) {
-      const totals = {};
-      filteredEntries.filter(e => e.Tipo === 'gasto').forEach(e => {
-        totals[e.Categoría] = (totals[e.Categoría] || 0) + parseFloat(e.Monto || 0);
-      });
-
-      const labels = Object.keys(totals);
-      const data = labels.map(l => totals[l]);
-
-      if (expensesChart) expensesChart.destroy();
-      expensesChart = new Chart(document.getElementById('expensesChart'), {
-        type: 'pie',
-        data: {
-          labels: labels,
-          datasets: [{ 
-            data: data, 
-            backgroundColor: ['#ff6384','#36a2eb','#cc65fe','#ffce56','#4bc0c0'] 
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { title: { display: true, text: 'Distribución de Gastos' } }
-        }
-      });
-    }
-
-    // Genera lista de categorías únicas desde las entradas
-    function updateCategoryList() {
+  // --- Agregar nueva categoría manualmente ---
+  document.getElementById('addCategoryBtn').addEventListener('click', async () => {
+    const newCat = prompt('Ingrese el nombre de la nueva categoría:');
+    if (newCat && newCat.trim() !== '') {
       const categorySelect = document.getElementById('category');
-      const allCategories = entries.map(e => e.Categoría).filter(Boolean);
-      const uniqueCategories = [...new Set(allCategories)].sort();
-
-      categorySelect.innerHTML = '<option value="">Seleccionar Categoría</option>';
-      uniqueCategories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = cat;
-        categorySelect.appendChild(option);
-      });
+      const option = document.createElement('option');
+      option.value = newCat.trim();
+      option.textContent = newCat.trim();
+      categorySelect.appendChild(option);
+      categorySelect.value = newCat.trim();
     }
+  });
 
-    // Permite agregar nuevas categorías
-    document.getElementById('addCategoryBtn').addEventListener('click', () => {
-      const newCat = prompt('Ingrese el nombre de la nueva categoría:');
-      if (newCat && newCat.trim() !== '') {
-        const categorySelect = document.getElementById('category');
-        const exists = Array.from(categorySelect.options).some(opt => opt.value.toLowerCase() === newCat.trim().toLowerCase());
-        if (!exists) {
-          const option = document.createElement('option');
-          option.value = newCat.trim();
-          option.textContent = newCat.trim();
-          categorySelect.appendChild(option);
-          categorySelect.value = newCat.trim();
-          alert('Categoría agregada localmente. Se guardará al registrar una nueva entrada.');
-        } else {
-          alert('Esa categoría ya existe.');
-        }
+  // --- Gráfico de gastos por categoría ---
+  function updateCategoryChart() {
+    const canvas = document.getElementById('categoryChart');
+    if (!canvas) return;
+
+    const month = document.getElementById('monthFilter').value;
+    const monthEntries = entries.filter(e => {
+      const entryMonth = new Date(e.Fecha).toLocaleString('es-AR', { month: 'long' });
+      return entryMonth.toLowerCase() === month.toLowerCase();
+    });
+
+    const categoryTotals = {};
+    monthEntries.forEach(e => {
+      if (e.Tipo === 'Gasto') {
+        const cat = e.Categoría || 'Sin categoría';
+        categoryTotals[cat] = (categoryTotals[cat] || 0) + parseFloat(e.Monto);
       }
     });
 
-    // Editar y eliminar
-    document.getElementById('entriesList').addEventListener('click', async (event) => {
-      if (event.target.classList.contains('edit-btn')) {
-        const id = event.target.dataset.id;
-        const entry = entries.find(e => e._id === id);
-        if (entry) {
-          populateFormForEdit(entry);
-        }
-      } else if (event.target.classList.contains('delete-btn')) {
-        const id = event.target.dataset.id;
-        if (confirm('¿Seguro que quieres eliminar esta entrada?')) {
-          await deleteEntry(id);
-          await fetchEntries();
-        }
+    const labels = Object.keys(categoryTotals);
+    const data = Object.values(categoryTotals);
+
+    if (categoryChart) categoryChart.destroy();
+
+    categoryChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Gasto total ($)',
+          data,
+          backgroundColor: 'rgba(59, 130, 246, 0.6)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          borderWidth: 1,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, title: { display: true, text: 'Monto ($)' } } }
       }
     });
-
-    function populateFormForEdit(entry) {
-      editingId = entry._id;
-      document.getElementById('type').value = entry.Tipo;
-      document.getElementById('amount').value = entry.Monto;
-      document.getElementById('category').value = entry.Categoría;
-      document.getElementById('date').value = entry.Fecha;
-      document.getElementById('comment').value = entry.Comentario || '';
-      document.getElementById('formTitle').textContent = 'Editar Entrada';
-      document.getElementById('submitBtn').textContent = 'Guardar Cambios';
-      document.getElementById('cancelEditBtn').style.display = 'inline-block';
-    }
-
-    document.getElementById('cancelEditBtn').addEventListener('click', () => {
-      resetForm();
-    });
-
-    function resetForm() {
-      editingId = null;
-      document.getElementById('entryForm').reset();
-      setDefaultDate();
-      document.getElementById('formTitle').textContent = 'Agregar Entrada';
-      document.getElementById('submitBtn').textContent = 'Agregar';
-      document.getElementById('cancelEditBtn').style.display = 'none';
-    }
-
-    document.getElementById('entryForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const type = document.getElementById('type').value;
-      const amount = parseFloat(document.getElementById('amount').value);
-      const category = document.getElementById('category').value;
-      const date = document.getElementById('date').value;
-      const comment = document.getElementById('comment').value;
-
-      if (amount && date && category) {
-        const entryData = {
-          Tipo: type,
-          Descripción: type === 'gasto' ? 'Gasto' : 'Ingreso',
-          Monto: amount,
-          Categoría: category,
-          Fecha: date,
-          Comentario: comment
-        };
-
-        if (editingId) {
-          await updateEntry(editingId, entryData);
-          resetForm();
-        } else {
-          await addEntry(entryData);
-          this.reset();
-          setDefaultDate();
-        }
-
-        await fetchEntries();
-      } else {
-        alert('Por favor, complete todos los campos requeridos.');
-      }
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      setDefaultDate();
-      fetchEntries();
-    });
+  }
   </script>
 </body>
 </html>
