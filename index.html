@@ -9,29 +9,38 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
       min-height: 100vh;
-      color: #333;
+      color: #e5e5e5;
     }
     .card {
       backdrop-filter: blur(10px);
       border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      background: rgba(45, 45, 45, 0.9);
+      border: 1px solid #555;
     }
     .form-input {
       border-radius: 8px;
-      border: 1px solid #ddd;
+      border: 1px solid #666;
       padding: 0.5rem;
+      background: #333;
+      color: #e5e5e5;
+    }
+    .form-input:focus {
+      border-color: #888;
+      outline: none;
     }
     .btn-primary {
-      background: #4f46e5;
+      background: #1e3a8a; /* Azul oscuro */
       color: white;
       padding: 0.5rem 1rem;
       border-radius: 8px;
       transition: background 0.3s;
+      border: none;
     }
     .btn-primary:hover {
-      background: #3730a3;
+      background: #1e40af; /* Azul un poco más claro para hover */
     }
     .summary-card {
       display: flex;
@@ -40,7 +49,7 @@
     }
     canvas {
       max-width: 100%;
-      background: white;
+      background: #333;
       border-radius: 15px;
     }
     .edit-btn, .delete-btn {
@@ -49,12 +58,48 @@
       margin-left: 0.5rem;
     }
     .edit-btn {
-      color: #2563eb;
+      color: #3b82f6; /* Azul claro para diferenciar */
       text-decoration: underline;
     }
     .delete-btn {
-      color: #dc2626;
+      color: #dc2626; /* Rojo para diferenciar, pero en tema oscuro */
       text-decoration: underline;
+    }
+    .delete-btn:hover {
+      color: #ef4444; /* Rojo más claro en hover */
+    }
+    .edit-btn:hover {
+      color: #60a5fa; /* Azul más claro en hover */
+    }
+    /* Ajustes adicionales para tema oscuro */
+    h1, h2, h3 {
+      color: #f3f4f6;
+    }
+    .text-green-600 {
+      color: #10b981; /* Verde para ingresos, ajustado para contraste */
+    }
+    .text-red-600 {
+      color: #ef4444; /* Rojo para gastos, ajustado para contraste */
+    }
+    .bg-gray-50 {
+      background: #374151; /* Gris oscuro para secciones agrupadas */
+    }
+    .text-gray-700 {
+      color: #d1d5db; /* Gris claro para texto */
+    }
+    .text-gray-500 {
+      color: #9ca3af; /* Gris medio */
+    }
+    .border {
+      border-color: #555;
+    }
+    select, textarea {
+      background: #333;
+      color: #e5e5e5;
+      border: 1px solid #666;
+    }
+    select:focus, textarea:focus {
+      border-color: #888;
     }
   </style>
 </head>
@@ -72,22 +117,22 @@
 
     <!-- Resumen -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="card bg-white p-4 summary-card">
+      <div class="card p-4 summary-card">
         <h3 class="font-semibold">Total Ingresos</h3>
         <p id="totalIncome" class="text-2xl font-bold text-green-600">$0 ARS</p>
       </div>
-      <div class="card bg-white p-4 summary-card">
+      <div class="card p-4 summary-card">
         <h3 class="font-semibold">Total Gastos</h3>
         <p id="totalExpenses" class="text-2xl font-bold text-red-600">$0 ARS</p>
       </div>
-      <div class="card bg-white p-4 summary-card">
+      <div class="card p-4 summary-card">
         <h3 class="font-semibold">Balance</h3>
         <p id="balance" class="text-2xl font-bold">$0 ARS</p>
       </div>
     </div>
 
     <!-- Formulario -->
-    <div class="card bg-white p-6 mb-6">
+    <div class="card p-6 mb-6">
       <h2 class="text-xl font-semibold mb-4" id="formTitle">Agregar Entrada</h2>
       <form id="entryForm">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -104,18 +149,18 @@
           <textarea id="comment" placeholder="Comentario (opcional)" class="form-input col-span-2" rows="2"></textarea>
         </div>
         <button type="submit" class="btn-primary mt-4" id="submitBtn">Agregar</button>
-        <button type="button" class="btn-primary mt-4 ml-4 bg-gray-500 hover:bg-gray-700" id="cancelEditBtn" style="display:none;">Cancelar</button>
+        <button type="button" class="btn-primary mt-4 ml-4 bg-gray-600 hover:bg-gray-800" id="cancelEditBtn" style="display:none;">Cancelar</button>
       </form>
     </div>
 
     <!-- Gráfico -->
-    <div class="card bg-white p-6 mb-6">
+    <div class="card p-6 mb-6">
       <h2 class="text-xl font-semibold mb-4">Distribución de Gastos por Categoría</h2>
       <canvas id="expensesChart"></canvas>
     </div>
 
     <!-- Lista agrupada -->
-    <div class="card bg-white p-6">
+    <div class="card p-6">
       <h2 class="text-xl font-semibold mb-4">Entradas Recientes (Agrupadas por Categoría)</h2>
       <div id="groupedEntries" class="space-y-4"></div>
     </div>
