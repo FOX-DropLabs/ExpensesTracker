@@ -47,14 +47,19 @@
       cursor: pointer;
       font-size: 0.9rem;
       margin-left: 0.5rem;
+      text-decoration: underline;
     }
     .edit-btn {
       color: #2563eb;
-      text-decoration: underline;
+    }
+    .edit-btn:hover {
+      color: #1d4ed8;
     }
     .delete-btn {
       color: #dc2626;
-      text-decoration: underline;
+    }
+    .delete-btn:hover {
+      color: #b91c1c;
     }
   </style>
 </head>
@@ -122,161 +127,207 @@
   </div>
 
   <script>
-  const API_URL = "https://sheetdb.io/api/v1/5b0et060artk7";
-  let entries = [];
-  let expensesChart;
-  let editingId = null;
+    const API_URL = "https://sheetdb.io/api/v1/5b0et060artk7";
+    let entries = [];
+    let expensesChart;
+    let editingId = null;
 
-  document.addEventListener('DOMContentLoaded', () => {
-    setDefaultDate();
-    setCurrentMonth();
-    fetchEntries();
-  });
-
-  function setDefaultDate() {
-    const today = new Date();
-    document.getElementById('date').value = today.toISOString().split('T')[0];
-  }
-
-  function setCurrentMonth() {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    document.getElementById('monthFilter').value = `${yyyy}-${mm}`;
-  }
-
-  async function fetchEntries() {
-    try {
-      const res = await fetch(API_URL);
-      entries = await res.json();
-      updateCategoryList();
-      updateUI();
-    } catch (error) {
-      alert('Error al cargar las entradas.');
-    }
-  }
-
-  async function addEntry(entry) {
-    try {
-      await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: [entry] })
-      });
-    } catch (error) {
-      alert('Error al agregar la entrada.');
-    }
-  }
-
-  async function updateEntry(id, data) {
-    try {
-      await fetch(`${API_URL}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: [data] })
-      });
-    } catch (error) {
-      alert('Error al actualizar la entrada.');
-    }
-  }
-
-  async function deleteEntry(id) {
-    try {
-      await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-    } catch (error) {
-      alert('Error al eliminar la entrada.');
-    }
-  }
-
-  document.getElementById('monthFilter').addEventListener('change', updateUI);
-
-  function updateUI() {
-    const selectedMonth = document.getElementById('monthFilter').value;
-    let filteredEntries = entries;
-    if (selectedMonth) {
-      filteredEntries = entries.filter(e => e.Fecha.startsWith(selectedMonth));
-    }
-
-    updateSummary(filteredEntries);
-    updateChart(filteredEntries);
-    renderGroupedEntries(filteredEntries);
-  }
-
-  function updateSummary(filteredEntries) {
-    const totalIncome = filteredEntries.filter(e => e.Tipo === 'ingreso').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
-    const totalExpenses = filteredEntries.filter(e => e.Tipo === 'gasto').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
-    const balance = totalIncome - totalExpenses;
-    document.getElementById('totalIncome').textContent = `$${totalIncome.toFixed(2)} ARS`;
-    document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)} ARS`;
-    const balanceEl = document.getElementById('balance');
-    balanceEl.textContent = `$${balance.toFixed(2)} ARS`;
-    balanceEl.classList.toggle('text-green-600', balance >= 0);
-    balanceEl.classList.toggle('text-red-600', balance < 0);
-  }
-
-  function updateChart(filteredEntries) {
-    const totals = {};
-    filteredEntries.filter(e => e.Tipo === 'gasto').forEach(e => {
-      totals[e.Categoría] = (totals[e.Categoría] || 0) + parseFloat(e.Monto || 0);
+    document.addEventListener('DOMContentLoaded', () => {
+      setDefaultDate();
+      setCurrentMonth();
+      fetchEntries();
     });
-    const labels = Object.keys(totals);
-    const data = Object.values(totals);
 
-    if (expensesChart) expensesChart.destroy();
+    function setDefaultDate() {
+      const today = new Date();
+      document.getElementById('date').value = today.toISOString().split('T')[0];
+    }
 
-    expensesChart = new Chart(document.getElementById('expensesChart'), {
-      type: 'pie',
-      data: {
-        labels,
-        datasets: [{
-          data,
-          backgroundColor: ['#ff6384','#36a2eb','#cc65fe','#ffce56','#4bc0c0']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { title: { display: true, text: 'Distribución de Gastos' } }
+    function setCurrentMonth() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      document.getElementById('monthFilter').value = `${yyyy}-${mm}`;
+    }
+
+    async function fetchEntries() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('Error en la respuesta de la API');
+        entries = await res.json();
+        updateCategoryList();
+        updateUI();
+      } catch (error) {
+        console.error('Error al cargar las entradas:', error);
+        alert('Error al cargar las entradas. Verifica tu conexión o la API.');
       }
-    });
-  }
+    }
 
-  function renderGroupedEntries(filteredEntries) {
-    const grouped = {};
-    filteredEntries.forEach(e => {
-      const cat = e.Categoría || "Sin categoría";
-      if (!grouped[cat]) grouped[cat] = [];
-      grouped[cat].push(e);
-    });
+    async function addEntry(entry) {
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: [entry] })
+        });
+        if (!res.ok) throw new Error('Error al agregar');
+      } catch (error) {
+        console.error('Error al agregar la entrada:', error);
+        alert('Error al agregar la entrada.');
+      }
+    }
 
-    const container = document.getElementById('groupedEntries');
-    container.innerHTML = '';
+    async function updateEntry(id, data) {
+      try {
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: [data] })
+        });
+        if (!res.ok) throw new Error('Error al actualizar');
+      } catch (error) {
+        console.error('Error al actualizar la entrada:', error);
+        alert('Error al actualizar la entrada.');
+      }
+    }
 
-    Object.keys(grouped).forEach(cat => {
-      const catTotal = grouped[cat].reduce((sum, e) => sum + parseFloat(e.Monto || 0), 0);
-      const div = document.createElement('div');
-      div.className = 'border rounded-lg p-4 bg-gray-50';
-      div.innerHTML = `<h3 class="font-semibold text-lg mb-2">${cat} <span class="text-sm text-gray-500">($${catTotal.toFixed(2)} ARS)</span></h3>`;
-      
-      grouped[cat].forEach(e => {
-        const line = document.createElement('p');
-        line.className = 'text-sm text-gray-700 ml-2';
-        line.textContent = `${new Date(e.Fecha).toLocaleDateString()} - $${parseFloat(e.Monto).toFixed(2)} ${e.Comentario ? ' - ' + e.Comentario : ''}`;
-        div.appendChild(line);
+    async function deleteEntry(id) {
+      try {
+        const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Error al eliminar');
+      } catch (error) {
+        console.error('Error al eliminar la entrada:', error);
+        alert('Error al eliminar la entrada.');
+      }
+    }
+
+    document.getElementById('monthFilter').addEventListener('change', updateUI);
+
+    function updateUI() {
+      const selectedMonth = document.getElementById('monthFilter').value;
+      let filteredEntries = entries;
+      if (selectedMonth) {
+        filteredEntries = entries.filter(e => e.Fecha && e.Fecha.startsWith(selectedMonth));
+      }
+      updateSummary(filteredEntries);
+      updateChart(filteredEntries);
+      renderGroupedEntries(filteredEntries);
+    }
+
+    function updateSummary(filteredEntries) {
+      const totalIncome = filteredEntries.filter(e => e.Tipo === 'ingreso').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
+      const totalExpenses = filteredEntries.filter(e => e.Tipo === 'gasto').reduce((s, e) => s + parseFloat(e.Monto || 0), 0);
+      const balance = totalIncome - totalExpenses;
+      document.getElementById('totalIncome').textContent = `$${totalIncome.toFixed(2)} ARS`;
+      document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)} ARS`;
+      const balanceEl = document.getElementById('balance');
+      balanceEl.textContent = `$${balance.toFixed(2)} ARS`;
+      balanceEl.classList.toggle('text-green-600', balance >= 0);
+      balanceEl.classList.toggle('text-red-600', balance < 0);
+    }
+
+    function updateChart(filteredEntries) {
+      const totals = {};
+      filteredEntries.filter(e => e.Tipo === 'gasto').forEach(e => {
+        totals[e.Categoría] = (totals[e.Categoría] || 0) + parseFloat(e.Monto || 0);
+      });
+      const labels = Object.keys(totals);
+      const data = Object.values(totals);
+
+      if (expensesChart) expensesChart.destroy();
+
+      expensesChart = new Chart(document.getElementById('expensesChart'), {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor: ['#ff6384','#36a2eb','#cc65fe','#ffce56','#4bc0c0']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { title: { display: true, text: 'Distribución de Gastos' } }
+        }
+      });
+    }
+
+    function renderGroupedEntries(filteredEntries) {
+      const grouped = {};
+      filteredEntries.forEach(e => {
+        const cat = e.Categoría || "Sin categoría";
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(e);
       });
 
-      container.appendChild(div);
-    });
-  }
+      const container = document.getElementById('groupedEntries');
+      container.innerHTML = '';
 
-  document.getElementById('entryForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const type = document.getElementById('type').value;
-    const amount = parseFloat(document.getElementById('amount').value);
-    const category = document.getElementById('category').value;
-    const date = document.getElementById('date').value;
-    const comment = document.getElementById('comment').value;
+      Object.keys(grouped).forEach(cat => {
+        const catTotal = grouped[cat].reduce((sum, e) => sum + parseFloat(e.Monto || 0), 0);
+        const div = document.createElement('div');
+        div.className = 'border rounded-lg p-4 bg-gray-50';
+        div.innerHTML = `<h3 class="font-semibold text-lg mb-2">${cat} <span class="text-sm text-gray-500">($${catTotal.toFixed(2)} ARS)</span></h3>`;
+        
+        grouped[cat].forEach(e => {
+          const line = document.createElement('div');
+          line.className = 'flex justify-between items-center text-sm text-gray-700 ml-2 mb-1';
+          line.innerHTML = `
+            <span>${new Date(e.Fecha).toLocaleDateString()} - $${parseFloat(e.Monto).toFixed(2)} ${e.Comentario ? ' - ' + e.Comentario : ''}</span>
+            <div>
+              <span class="edit-btn" data-id="${e.id}">Editar</span>
+              <span class="delete-btn" data-id="${e.id}">Eliminar</span>
+            </div>
+          `;
+          div.appendChild(line);
+        });
 
-    if (amount && date && category) {
+        container.appendChild(div);
+      });
+
+      // Agregar event listeners para editar y eliminar
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+          const id = event.target.dataset.id;
+          const entry = entries.find(e => e.id == id);
+          if (entry) {
+            editingId = id;
+            document.getElementById('formTitle').textContent = 'Editar Entrada';
+            document.getElementById('type').value = entry.Tipo;
+            document.getElementById('amount').value = entry.Monto;
+            document.getElementById('category').value = entry.Categoría;
+            document.getElementById('date').value = entry.Fecha;
+            document.getElementById('comment').value = entry.Comentario || '';
+            document.getElementById('submitBtn').textContent = 'Actualizar';
+            document.getElementById('cancelEditBtn').style.display = 'inline-block';
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (event) => {
+          const id = event.target.dataset.id;
+          if (confirm('¿Estás seguro de que quieres eliminar esta entrada?')) {
+            await deleteEntry(id);
+            await fetchEntries();
+          }
+        });
+      });
+    }
+
+    document.getElementById('entryForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const type = document.getElementById('type').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const category = document.getElementById('category').value;
+      const date = document.getElementById('date').value;
+      const comment = document.getElementById('comment').value;
+
+      if (amount <= 0 || !date || !category) {
+        alert('Por favor, complete todos los campos requeridos y asegúrese de que el monto sea positivo.');
+        return;
+      }
+
       const entryData = {
         Tipo: type,
         Descripción: type === 'gasto' ? 'Gasto' : 'Ingreso',
@@ -285,38 +336,54 @@
         Fecha: date,
         Comentario: comment
       };
-      await addEntry(entryData);
+
+      if (editingId) {
+        await updateEntry(editingId, entryData);
+        editingId = null;
+        document.getElementById('formTitle').textContent = 'Agregar Entrada';
+        document.getElementById('submitBtn').textContent = 'Agregar';
+        document.getElementById('cancelEditBtn').style.display = 'none';
+      } else {
+        await addEntry(entryData);
+      }
+
       await fetchEntries();
       this.reset();
       setDefaultDate();
-    } else {
-      alert('Por favor, complete todos los campos requeridos.');
-    }
-  });
-
-  document.getElementById('addCategoryBtn').addEventListener('click', () => {
-    const newCat = prompt('Ingrese nueva categoría:');
-    if (newCat && newCat.trim()) {
-      const select = document.getElementById('category');
-      const opt = document.createElement('option');
-      opt.value = newCat.trim();
-      opt.textContent = newCat.trim();
-      select.appendChild(opt);
-      select.value = newCat.trim();
-    }
-  });
-
-  function updateCategoryList() {
-    const categorySelect = document.getElementById('category');
-    const categories = [...new Set(entries.map(e => e.Categoría).filter(Boolean))];
-    categorySelect.innerHTML = '<option value="">Seleccionar Categoría</option>';
-    categories.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c;
-      categorySelect.appendChild(opt);
     });
-  }
+
+    document.getElementById('cancelEditBtn').addEventListener('click', () => {
+      editingId = null;
+      document.getElementById('formTitle').textContent = 'Agregar Entrada';
+      document.getElementById('submitBtn').textContent = 'Agregar';
+      document.getElementById('cancelEditBtn').style.display = 'none';
+      document.getElementById('entryForm').reset();
+      setDefaultDate();
+    });
+
+    document.getElementById('addCategoryBtn').addEventListener('click', () => {
+      const newCat = prompt('Ingrese nueva categoría:');
+      if (newCat && newCat.trim()) {
+        const select = document.getElementById('category');
+        const opt = document.createElement('option');
+        opt.value = newCat.trim();
+        opt.textContent = newCat.trim();
+        select.appendChild(opt);
+        select.value = newCat.trim();
+      }
+    });
+
+    function updateCategoryList() {
+      const categorySelect = document.getElementById('category');
+      const categories = [...new Set(entries.map(e => e.Categoría).filter(Boolean))];
+      categorySelect.innerHTML = '<option value="">Seleccionar Categoría</option>';
+      categories.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        categorySelect.appendChild(opt);
+      });
+    }
   </script>
 </body>
 </html>
