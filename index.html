@@ -9,38 +9,37 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       min-height: 100vh;
-      color: #e5e5e5;
+      color: #e5e7eb;
     }
     .card {
       backdrop-filter: blur(10px);
       border-radius: 15px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      background: rgba(45, 45, 45, 0.9);
-      border: 1px solid #555;
+      background: rgba(31, 41, 55, 0.9);
+      border: 1px solid rgba(75, 85, 99, 0.3);
     }
     .form-input {
       border-radius: 8px;
-      border: 1px solid #666;
+      border: 1px solid #374151;
       padding: 0.5rem;
-      background: #333;
-      color: #e5e5e5;
+      background: #1f2937;
+      color: #e5e7eb;
     }
     .form-input:focus {
-      border-color: #888;
+      border-color: #3b82f6;
       outline: none;
     }
     .btn-primary {
-      background: #1e3a8a; /* Azul oscuro */
+      background: #4b5563; /* Gris azulado oscuro para mejor integración con tema oscuro */
       color: white;
       padding: 0.5rem 1rem;
       border-radius: 8px;
       transition: background 0.3s;
-      border: none;
     }
     .btn-primary:hover {
-      background: #1e40af; /* Azul un poco más claro para hover */
+      background: #6b7280; /* Hover más claro para visibilidad */
     }
     .summary-card {
       display: flex;
@@ -49,7 +48,7 @@
     }
     canvas {
       max-width: 100%;
-      background: #333;
+      background: rgba(31, 41, 55, 0.9);
       border-radius: 15px;
     }
     .edit-btn, .delete-btn {
@@ -58,48 +57,12 @@
       margin-left: 0.5rem;
     }
     .edit-btn {
-      color: #3b82f6; /* Azul claro para diferenciar */
+      color: #2563eb;
       text-decoration: underline;
     }
     .delete-btn {
-      color: #dc2626; /* Rojo para diferenciar, pero en tema oscuro */
+      color: #dc2626;
       text-decoration: underline;
-    }
-    .delete-btn:hover {
-      color: #ef4444; /* Rojo más claro en hover */
-    }
-    .edit-btn:hover {
-      color: #60a5fa; /* Azul más claro en hover */
-    }
-    /* Ajustes adicionales para tema oscuro */
-    h1, h2, h3 {
-      color: #f3f4f6;
-    }
-    .text-green-600 {
-      color: #10b981; /* Verde para ingresos, ajustado para contraste */
-    }
-    .text-red-600 {
-      color: #ef4444; /* Rojo para gastos, ajustado para contraste */
-    }
-    .bg-gray-50 {
-      background: #374151; /* Gris oscuro para secciones agrupadas */
-    }
-    .text-gray-700 {
-      color: #d1d5db; /* Gris claro para texto */
-    }
-    .text-gray-500 {
-      color: #9ca3af; /* Gris medio */
-    }
-    .border {
-      border-color: #555;
-    }
-    select, textarea {
-      background: #333;
-      color: #e5e5e5;
-      border: 1px solid #666;
-    }
-    select:focus, textarea:focus {
-      border-color: #888;
     }
   </style>
 </head>
@@ -118,22 +81,22 @@
     <!-- Resumen -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div class="card p-4 summary-card">
-        <h3 class="font-semibold">Total Ingresos</h3>
-        <p id="totalIncome" class="text-2xl font-bold text-green-600">$0 ARS</p>
+        <h3 class="font-semibold text-white">Total Ingresos</h3>
+        <p id="totalIncome" class="text-2xl font-bold text-green-400">$0 ARS</p>
       </div>
       <div class="card p-4 summary-card">
-        <h3 class="font-semibold">Total Gastos</h3>
-        <p id="totalExpenses" class="text-2xl font-bold text-red-600">$0 ARS</p>
+        <h3 class="font-semibold text-white">Total Gastos</h3>
+        <p id="totalExpenses" class="text-2xl font-bold text-red-400">$0 ARS</p>
       </div>
       <div class="card p-4 summary-card">
-        <h3 class="font-semibold">Balance</h3>
+        <h3 class="font-semibold text-white">Balance</h3>
         <p id="balance" class="text-2xl font-bold">$0 ARS</p>
       </div>
     </div>
 
     <!-- Formulario -->
     <div class="card p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-4" id="formTitle">Agregar Entrada</h2>
+      <h2 class="text-xl font-semibold mb-4 text-white" id="formTitle">Agregar Entrada</h2>
       <form id="entryForm">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <select id="type" class="form-input" required>
@@ -143,25 +106,25 @@
           <input type="number" id="amount" placeholder="Monto (ARS)" class="form-input" required min="0.01" step="0.01" />
           <div class="flex gap-2">
             <select id="category" class="form-input flex-1" required></select>
-            <button type="button" id="addCategoryBtn" class="btn-primary bg-green-600 hover:bg-green-700">+</button>
+            <button type="button" id="addCategoryBtn" class="btn-primary bg-green-700 hover:bg-green-800">+</button>
           </div>
           <input type="date" id="date" class="form-input" required />
           <textarea id="comment" placeholder="Comentario (opcional)" class="form-input col-span-2" rows="2"></textarea>
         </div>
         <button type="submit" class="btn-primary mt-4" id="submitBtn">Agregar</button>
-        <button type="button" class="btn-primary mt-4 ml-4 bg-gray-600 hover:bg-gray-800" id="cancelEditBtn" style="display:none;">Cancelar</button>
+        <button type="button" class="btn-primary mt-4 ml-4 bg-gray-500 hover:bg-gray-700" id="cancelEditBtn" style="display:none;">Cancelar</button>
       </form>
     </div>
 
     <!-- Gráfico -->
     <div class="card p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-4">Distribución de Gastos por Categoría</h2>
+      <h2 class="text-xl font-semibold mb-4 text-white">Distribución de Gastos por Categoría</h2>
       <canvas id="expensesChart"></canvas>
     </div>
 
     <!-- Lista agrupada -->
     <div class="card p-6">
-      <h2 class="text-xl font-semibold mb-4">Entradas Recientes (Agrupadas por Categoría)</h2>
+      <h2 class="text-xl font-semibold mb-4 text-white">Entradas Recientes (Agrupadas por Categoría)</h2>
       <div id="groupedEntries" class="space-y-4"></div>
     </div>
   </div>
@@ -280,7 +243,10 @@
       },
       options: {
         responsive: true,
-        plugins: { title: { display: true, text: 'Distribución de Gastos' } }
+        plugins: { 
+          title: { display: true, text: 'Distribución de Gastos', color: '#e5e7eb' },
+          legend: { labels: { color: '#e5e7eb' } }
+        }
       }
     });
   }
@@ -299,12 +265,12 @@
     Object.keys(grouped).forEach(cat => {
       const catTotal = grouped[cat].reduce((sum, e) => sum + parseFloat(e.Monto || 0), 0);
       const div = document.createElement('div');
-      div.className = 'border rounded-lg p-4 bg-gray-50';
-      div.innerHTML = `<h3 class="font-semibold text-lg mb-2">${cat} <span class="text-sm text-gray-500">($${catTotal.toFixed(2)} ARS)</span></h3>`;
+      div.className = 'border border-gray-600 rounded-lg p-4 bg-gray-800';
+      div.innerHTML = `<h3 class="font-semibold text-lg mb-2 text-white">${cat} <span class="text-sm text-gray-400">($${catTotal.toFixed(2)} ARS)</span></h3>`;
       
       grouped[cat].forEach(e => {
         const line = document.createElement('p');
-        line.className = 'text-sm text-gray-700 ml-2';
+        line.className = 'text-sm text-gray-300 ml-2';
         line.textContent = `${new Date(e.Fecha).toLocaleDateString()} - $${parseFloat(e.Monto).toFixed(2)} ${e.Comentario ? ' - ' + e.Comentario : ''}`;
         div.appendChild(line);
       });
