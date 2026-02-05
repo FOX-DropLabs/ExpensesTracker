@@ -155,7 +155,6 @@
   let entries = [];
   let expensesChart;
   let editingId = null;
-  let currentFilteredEntries = []; // Nueva variable para almacenar entradas filtradas
 
   document.addEventListener('DOMContentLoaded', () => {
     setDefaultDate();
@@ -222,14 +221,14 @@
 
   function updateUI() {
     const selectedMonth = document.getElementById('monthFilter').value;
-    currentFilteredEntries = entries; // Por defecto, todas
+    let filteredEntries = entries;
     if (selectedMonth) {
-      currentFilteredEntries = entries.filter(e => e.Fecha.startsWith(selectedMonth));
+      filteredEntries = entries.filter(e => e.Fecha.startsWith(selectedMonth));
     }
 
-    updateSummary(currentFilteredEntries);
-    updateChart(currentFilteredEntries);
-    renderGroupedEntries(currentFilteredEntries);
+    updateSummary(filteredEntries);
+    updateChart(filteredEntries);
+    renderGroupedEntries(filteredEntries);
   }
 
   function updateSummary(filteredEntries) {
@@ -274,20 +273,15 @@
   }
 
   function renderGroupedEntries(filteredEntries) {
-    const container = document.getElementById('groupedEntries');
-    container.innerHTML = '';
-
-    if (filteredEntries.length === 0) {
-      container.innerHTML = '<p class="text-gray-400">No hay entradas para mostrar en este mes.</p>';
-      return;
-    }
-
     const grouped = {};
     filteredEntries.forEach(e => {
       const cat = e.Categoría || "Sin categoría";
       if (!grouped[cat]) grouped[cat] = [];
       grouped[cat].push(e);
     });
+
+    const container = document.getElementById('groupedEntries');
+    container.innerHTML = '';
 
     Object.keys(grouped).forEach(cat => {
       const catTotal = grouped[cat].reduce((sum, e) => sum + parseFloat(e.Monto || 0), 0);
@@ -296,10 +290,6 @@
       div.innerHTML = `<h3 class="font-semibold text-lg mb-2 text-white">${cat} <span class="text-sm text-gray-400">($${catTotal.toFixed(2)} ARS)</span></h3>`;
       
       grouped[cat].forEach(e => {
-        if (!e.id) {
-          console.warn('Entrada sin ID:', e); // Log si falta ID
-          return; // No crear botones si no hay ID
-        }
         const line = document.createElement('div');
         line.className = 'text-sm text-gray-300 ml-2 flex justify-between items-center';
         line.innerHTML = `
@@ -334,15 +324,8 @@
   }
 
   function editEntry(id) {
-    console.log('Intentando editar entrada con ID:', id);
-    console.log('IDs disponibles en entradas filtradas:', currentFilteredEntries.map(e => e.id));
-    let entry = currentFilteredEntries.find(e => String(e.id) === String(id)); // Buscar primero en filtradas
-    if (!entry) {
-      console.log('No encontrada en filtradas, buscando en global...');
-      entry = entries.find(e => String(e.id) === String(id)); // Fallback a global
-    }
+    const entry = entries.find(e => e.id == id);
     if (entry) {
-      console.log('Entrada encontrada:', entry);
       editingId = id;
       document.getElementById('type').value = entry.Tipo;
       document.getElementById('amount').value = entry.Monto;
@@ -352,9 +335,6 @@
       document.getElementById('formTitle').textContent = 'Editar Entrada';
       document.getElementById('submitBtn').textContent = 'Actualizar';
       document.getElementById('cancelEditBtn').style.display = 'inline-block';
-    } else {
-      console.error('Entrada no encontrada para editar con ID:', id);
-      alert('Error: No se pudo encontrar la entrada para editar. IDs disponibles en filtradas: ' + currentFilteredEntries.map(e => e.id).join(', ') + '. En global: ' + entries.map(e => e.id).join(', '));
     }
   }
 
