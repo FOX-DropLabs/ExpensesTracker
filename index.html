@@ -32,68 +32,48 @@
       outline: none;
     }
     .btn-primary {
-      background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: bold;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-      transition: all 0.3s;
-      border: none;
-    }
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-      box-shadow: 0 6px 8px rgba(0,0,0,0.3);
-      transform: translateY(-1px);
-    }
-    .btn-secondary {
-      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: bold;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-      transition: all 0.3s;
-      border: none;
-    }
-    .btn-secondary:hover {
-      background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
-      box-shadow: 0 6px 8px rgba(0,0,0,0.3);
-      transform: translateY(-1px);
-    }
-    .btn-edit {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      background: #1e40af;
       color: white;
       padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 0.85rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      transition: all 0.3s;
-      border: none;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    .btn-secondary {
+      background: #dc2626;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+    .btn-secondary:hover {
+      background: #b91c1c;
+    }
+    .btn-edit {
+      background: #2563eb;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
       cursor: pointer;
     }
     .btn-edit:hover {
-      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      transform: translateY(-1px);
+      background: #1d4ed8;
     }
     .btn-delete {
-      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      background: #dc2626;
       color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 0.85rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      transition: all 0.3s;
-      border: none;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
       cursor: pointer;
     }
     .btn-delete:hover {
-      background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      transform: translateY(-1px);
+      background: #b91c1c;
     }
     .summary-card {
       display: flex;
@@ -220,9 +200,9 @@
   async function updateEntry(id, data) {
     try {
       await fetch(`${API_URL}/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: data })
+        body: JSON.stringify({ data: [data] })
       });
     } catch (error) {
       alert('Error al actualizar la entrada.');
@@ -327,24 +307,23 @@
 
     // Agregar event listeners para editar y eliminar
     document.querySelectorAll('.btn-edit').forEach(btn => {
-      btn.addEventListener('click', async (event) => {
+      btn.addEventListener('click', (event) => {
         const id = event.target.getAttribute('data-id');
-        await editEntry(id);
+        editEntry(id);
       });
     });
 
     document.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', async (event) => {
+      btn.addEventListener('click', (event) => {
         const id = event.target.getAttribute('data-id');
         if (confirm('¿Estás seguro de que quieres eliminar esta entrada?')) {
-          await deleteEntry(id);
-          await fetchEntries();
+          deleteEntry(id).then(() => fetchEntries());
         }
       });
     });
   }
 
-  async function editEntry(id) {
+  function editEntry(id) {
     const entry = entries.find(e => e.id == id);
     if (entry) {
       editingId = id;
@@ -427,3 +406,6 @@
       categorySelect.appendChild(opt);
     });
   }
+  </script>
+</body>
+</html>
