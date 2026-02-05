@@ -274,15 +274,20 @@
   }
 
   function renderGroupedEntries(filteredEntries) {
+    const container = document.getElementById('groupedEntries');
+    container.innerHTML = '';
+
+    if (filteredEntries.length === 0) {
+      container.innerHTML = '<p class="text-gray-400">No hay entradas para mostrar en este mes.</p>';
+      return;
+    }
+
     const grouped = {};
     filteredEntries.forEach(e => {
       const cat = e.Categoría || "Sin categoría";
       if (!grouped[cat]) grouped[cat] = [];
       grouped[cat].push(e);
     });
-
-    const container = document.getElementById('groupedEntries');
-    container.innerHTML = '';
 
     Object.keys(grouped).forEach(cat => {
       const catTotal = grouped[cat].reduce((sum, e) => sum + parseFloat(e.Monto || 0), 0);
@@ -331,7 +336,11 @@
   function editEntry(id) {
     console.log('Intentando editar entrada con ID:', id);
     console.log('IDs disponibles en entradas filtradas:', currentFilteredEntries.map(e => e.id));
-    const entry = currentFilteredEntries.find(e => String(e.id) === String(id)); // Buscar en filtradas
+    let entry = currentFilteredEntries.find(e => String(e.id) === String(id)); // Buscar primero en filtradas
+    if (!entry) {
+      console.log('No encontrada en filtradas, buscando en global...');
+      entry = entries.find(e => String(e.id) === String(id)); // Fallback a global
+    }
     if (entry) {
       console.log('Entrada encontrada:', entry);
       editingId = id;
@@ -345,7 +354,7 @@
       document.getElementById('cancelEditBtn').style.display = 'inline-block';
     } else {
       console.error('Entrada no encontrada para editar con ID:', id);
-      alert('Error: No se pudo encontrar la entrada para editar. IDs disponibles: ' + currentFilteredEntries.map(e => e.id).join(', '));
+      alert('Error: No se pudo encontrar la entrada para editar. IDs disponibles en filtradas: ' + currentFilteredEntries.map(e => e.id).join(', ') + '. En global: ' + entries.map(e => e.id).join(', '));
     }
   }
 
