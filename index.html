@@ -9,71 +9,29 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
-      color: #e5e7eb;
+      color: #333;
     }
     .card {
       backdrop-filter: blur(10px);
       border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      background: rgba(31, 41, 55, 0.9);
-      border: 1px solid rgba(75, 85, 99, 0.3);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
     .form-input {
       border-radius: 8px;
-      border: 1px solid #374151;
+      border: 1px solid #ddd;
       padding: 0.5rem;
-      background: #1f2937;
-      color: #e5e7eb;
-    }
-    .form-input:focus {
-      border-color: #3b82f6;
-      outline: none;
     }
     .btn-primary {
-      background: #1e40af;
+      background: #4f46e5;
       color: white;
       padding: 0.5rem 1rem;
       border-radius: 8px;
       transition: background 0.3s;
     }
     .btn-primary:hover {
-      background: #1d4ed8;
-    }
-    .btn-secondary {
-      background: #dc2626;
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      transition: background 0.3s;
-    }
-    .btn-secondary:hover {
-      background: #b91c1c;
-    }
-    .btn-edit {
-      background: #2563eb;
-      color: white;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      margin-left: 0.5rem;
-      cursor: pointer;
-    }
-    .btn-edit:hover {
-      background: #1d4ed8;
-    }
-    .btn-delete {
-      background: #dc2626;
-      color: white;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      margin-left: 0.5rem;
-      cursor: pointer;
-    }
-    .btn-delete:hover {
-      background: #b91c1c;
+      background: #3730a3;
     }
     .summary-card {
       display: flex;
@@ -82,8 +40,21 @@
     }
     canvas {
       max-width: 100%;
-      background: rgba(31, 41, 55, 0.9);
+      background: white;
       border-radius: 15px;
+    }
+    .edit-btn, .delete-btn {
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-left: 0.5rem;
+    }
+    .edit-btn {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+    .delete-btn {
+      color: #dc2626;
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -101,23 +72,23 @@
 
     <!-- Resumen -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="card p-4 summary-card">
-        <h3 class="font-semibold text-white">Total Ingresos</h3>
-        <p id="totalIncome" class="text-2xl font-bold text-green-400">$0 ARS</p>
+      <div class="card bg-white p-4 summary-card">
+        <h3 class="font-semibold">Total Ingresos</h3>
+        <p id="totalIncome" class="text-2xl font-bold text-green-600">$0 ARS</p>
       </div>
-      <div class="card p-4 summary-card">
-        <h3 class="font-semibold text-white">Total Gastos</h3>
-        <p id="totalExpenses" class="text-2xl font-bold text-red-400">$0 ARS</p>
+      <div class="card bg-white p-4 summary-card">
+        <h3 class="font-semibold">Total Gastos</h3>
+        <p id="totalExpenses" class="text-2xl font-bold text-red-600">$0 ARS</p>
       </div>
-      <div class="card p-4 summary-card">
-        <h3 class="font-semibold text-white">Balance</h3>
+      <div class="card bg-white p-4 summary-card">
+        <h3 class="font-semibold">Balance</h3>
         <p id="balance" class="text-2xl font-bold">$0 ARS</p>
       </div>
     </div>
 
     <!-- Formulario -->
-    <div class="card p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-4 text-white" id="formTitle">Agregar Entrada</h2>
+    <div class="card bg-white p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4" id="formTitle">Agregar Entrada</h2>
       <form id="entryForm">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <select id="type" class="form-input" required>
@@ -127,25 +98,25 @@
           <input type="number" id="amount" placeholder="Monto (ARS)" class="form-input" required min="0.01" step="0.01" />
           <div class="flex gap-2">
             <select id="category" class="form-input flex-1" required></select>
-            <button type="button" id="addCategoryBtn" class="btn-primary bg-green-700 hover:bg-green-800">+</button>
+            <button type="button" id="addCategoryBtn" class="btn-primary bg-green-600 hover:bg-green-700">+</button>
           </div>
           <input type="date" id="date" class="form-input" required />
           <textarea id="comment" placeholder="Comentario (opcional)" class="form-input col-span-2" rows="2"></textarea>
         </div>
         <button type="submit" class="btn-primary mt-4" id="submitBtn">Agregar</button>
-        <button type="button" class="btn-secondary mt-4 ml-4" id="cancelEditBtn" style="display:none;">Cancelar</button>
+        <button type="button" class="btn-primary mt-4 ml-4 bg-gray-500 hover:bg-gray-700" id="cancelEditBtn" style="display:none;">Cancelar</button>
       </form>
     </div>
 
     <!-- Gráfico -->
-    <div class="card p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-4 text-white">Distribución de Gastos por Categoría</h2>
+    <div class="card bg-white p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4">Distribución de Gastos por Categoría</h2>
       <canvas id="expensesChart"></canvas>
     </div>
 
     <!-- Lista agrupada -->
-    <div class="card p-6">
-      <h2 class="text-xl font-semibold mb-4 text-white">Entradas Recientes (Agrupadas por Categoría)</h2>
+    <div class="card bg-white p-6">
+      <h2 class="text-xl font-semibold mb-4">Entradas Recientes (Agrupadas por Categoría)</h2>
       <div id="groupedEntries" class="space-y-4"></div>
     </div>
   </div>
@@ -239,8 +210,8 @@
     document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)} ARS`;
     const balanceEl = document.getElementById('balance');
     balanceEl.textContent = `$${balance.toFixed(2)} ARS`;
-    balanceEl.classList.toggle('text-green-400', balance >= 0);
-    balanceEl.classList.toggle('text-red-400', balance < 0);
+    balanceEl.classList.toggle('text-green-600', balance >= 0);
+    balanceEl.classList.toggle('text-red-600', balance < 0);
   }
 
   function updateChart(filteredEntries) {
@@ -259,15 +230,12 @@
         labels,
         datasets: [{
           data,
-          backgroundColor: ['#ef4444','#3b82f6','#8b5cf6','#f59e0b','#06b6d4']
+          backgroundColor: ['#ff6384','#36a2eb','#cc65fe','#ffce56','#4bc0c0']
         }]
       },
       options: {
         responsive: true,
-        plugins: { 
-          title: { display: true, text: 'Distribución de Gastos', color: '#e5e7eb' },
-          legend: { labels: { color: '#e5e7eb' } }
-        }
+        plugins: { title: { display: true, text: 'Distribución de Gastos' } }
       }
     });
   }
@@ -286,66 +254,19 @@
     Object.keys(grouped).forEach(cat => {
       const catTotal = grouped[cat].reduce((sum, e) => sum + parseFloat(e.Monto || 0), 0);
       const div = document.createElement('div');
-      div.className = 'border border-gray-600 rounded-lg p-4 bg-gray-800';
-      div.innerHTML = `<h3 class="font-semibold text-lg mb-2 text-white">${cat} <span class="text-sm text-gray-400">($${catTotal.toFixed(2)} ARS)</span></h3>`;
+      div.className = 'border rounded-lg p-4 bg-gray-50';
+      div.innerHTML = `<h3 class="font-semibold text-lg mb-2">${cat} <span class="text-sm text-gray-500">($${catTotal.toFixed(2)} ARS)</span></h3>`;
       
       grouped[cat].forEach(e => {
-        const line = document.createElement('div');
-        line.className = 'text-sm text-gray-300 ml-2 flex justify-between items-center';
-        line.innerHTML = `
-          <span>${new Date(e.Fecha).toLocaleDateString()} - $${parseFloat(e.Monto).toFixed(2)} ${e.Comentario ? ' - ' + e.Comentario : ''}</span>
-          <div>
-            <button class="btn-edit" data-id="${e.id}">Editar</button>
-            <button class="btn-delete" data-id="${e.id}">Eliminar</button>
-          </div>
-        `;
+        const line = document.createElement('p');
+        line.className = 'text-sm text-gray-700 ml-2';
+        line.textContent = `${new Date(e.Fecha).toLocaleDateString()} - $${parseFloat(e.Monto).toFixed(2)} ${e.Comentario ? ' - ' + e.Comentario : ''}`;
         div.appendChild(line);
       });
 
       container.appendChild(div);
     });
-
-    // Agregar event listeners para editar y eliminar
-    document.querySelectorAll('.btn-edit').forEach(btn => {
-      btn.addEventListener('click', (event) => {
-        const id = event.target.getAttribute('data-id');
-        editEntry(id);
-      });
-    });
-
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', (event) => {
-        const id = event.target.getAttribute('data-id');
-        if (confirm('¿Estás seguro de que quieres eliminar esta entrada?')) {
-          deleteEntry(id).then(() => fetchEntries());
-        }
-      });
-    });
   }
-
-  function editEntry(id) {
-    const entry = entries.find(e => e.id == id);
-    if (entry) {
-      editingId = id;
-      document.getElementById('type').value = entry.Tipo;
-      document.getElementById('amount').value = entry.Monto;
-      document.getElementById('category').value = entry.Categoría;
-      document.getElementById('date').value = entry.Fecha;
-      document.getElementById('comment').value = entry.Comentario || '';
-      document.getElementById('formTitle').textContent = 'Editar Entrada';
-      document.getElementById('submitBtn').textContent = 'Actualizar';
-      document.getElementById('cancelEditBtn').style.display = 'inline-block';
-    }
-  }
-
-  document.getElementById('cancelEditBtn').addEventListener('click', () => {
-    editingId = null;
-    document.getElementById('entryForm').reset();
-    setDefaultDate();
-    document.getElementById('formTitle').textContent = 'Agregar Entrada';
-    document.getElementById('submitBtn').textContent = 'Agregar';
-    document.getElementById('cancelEditBtn').style.display = 'none';
-  });
 
   document.getElementById('entryForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -364,17 +285,7 @@
         Fecha: date,
         Comentario: comment
       };
-
-      if (editingId) {
-        await updateEntry(editingId, entryData);
-        editingId = null;
-        document.getElementById('formTitle').textContent = 'Agregar Entrada';
-        document.getElementById('submitBtn').textContent = 'Agregar';
-        document.getElementById('cancelEditBtn').style.display = 'none';
-      } else {
-        await addEntry(entryData);
-      }
-
+      await addEntry(entryData);
       await fetchEntries();
       this.reset();
       setDefaultDate();
