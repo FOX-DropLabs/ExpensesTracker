@@ -155,6 +155,7 @@
   let entries = [];
   let expensesChart;
   let editingId = null;
+  let currentFilteredEntries = []; // Nueva variable para almacenar entradas filtradas
 
   document.addEventListener('DOMContentLoaded', () => {
     setDefaultDate();
@@ -221,14 +222,14 @@
 
   function updateUI() {
     const selectedMonth = document.getElementById('monthFilter').value;
-    let filteredEntries = entries;
+    currentFilteredEntries = entries; // Por defecto, todas
     if (selectedMonth) {
-      filteredEntries = entries.filter(e => e.Fecha.startsWith(selectedMonth));
+      currentFilteredEntries = entries.filter(e => e.Fecha.startsWith(selectedMonth));
     }
 
-    updateSummary(filteredEntries);
-    updateChart(filteredEntries);
-    renderGroupedEntries(filteredEntries);
+    updateSummary(currentFilteredEntries);
+    updateChart(currentFilteredEntries);
+    renderGroupedEntries(currentFilteredEntries);
   }
 
   function updateSummary(filteredEntries) {
@@ -290,6 +291,10 @@
       div.innerHTML = `<h3 class="font-semibold text-lg mb-2 text-white">${cat} <span class="text-sm text-gray-400">($${catTotal.toFixed(2)} ARS)</span></h3>`;
       
       grouped[cat].forEach(e => {
+        if (!e.id) {
+          console.warn('Entrada sin ID:', e); // Log si falta ID
+          return; // No crear botones si no hay ID
+        }
         const line = document.createElement('div');
         line.className = 'text-sm text-gray-300 ml-2 flex justify-between items-center';
         line.innerHTML = `
@@ -324,10 +329,11 @@
   }
 
   function editEntry(id) {
-    console.log('Intentando editar entrada con ID:', id); // Log para debug
-    const entry = entries.find(e => String(e.id) === String(id)); // Comparación segura con strings
+    console.log('Intentando editar entrada con ID:', id);
+    console.log('IDs disponibles en entradas filtradas:', currentFilteredEntries.map(e => e.id));
+    const entry = currentFilteredEntries.find(e => String(e.id) === String(id)); // Buscar en filtradas
     if (entry) {
-      console.log('Entrada encontrada:', entry); // Log para debug
+      console.log('Entrada encontrada:', entry);
       editingId = id;
       document.getElementById('type').value = entry.Tipo;
       document.getElementById('amount').value = entry.Monto;
@@ -338,8 +344,8 @@
       document.getElementById('submitBtn').textContent = 'Actualizar';
       document.getElementById('cancelEditBtn').style.display = 'inline-block';
     } else {
-      console.error('Entrada no encontrada para editar con ID:', id); // Log de error
-      alert('Error: No se pudo encontrar la entrada para editar.');
+      console.error('Entrada no encontrada para editar con ID:', id);
+      alert('Error: No se pudo encontrar la entrada para editar. IDs disponibles: ' + currentFilteredEntries.map(e => e.id).join(', '));
     }
   }
 
