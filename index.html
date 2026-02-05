@@ -32,27 +32,27 @@
       outline: none;
     }
     .btn-primary {
-      background: #1e40af;
+      background: #1e3a8a; /* Azul más oscuro para mejor integración con el tema */
       color: white;
       padding: 0.5rem 1rem;
       border-radius: 8px;
       transition: background 0.3s;
     }
     .btn-primary:hover {
-      background: #1d4ed8;
+      background: #1e40af;
     }
     .btn-secondary {
-      background: #dc2626;
+      background: #7f1d1d; /* Rojo más oscuro para mejor integración */
       color: white;
       padding: 0.5rem 1rem;
       border-radius: 8px;
       transition: background 0.3s;
     }
     .btn-secondary:hover {
-      background: #b91c1c;
+      background: #991b1b;
     }
     .btn-edit {
-      background: #2563eb;
+      background: #1e3a8a; /* Azul más oscuro, consistente con btn-primary */
       color: white;
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
@@ -61,10 +61,10 @@
       cursor: pointer;
     }
     .btn-edit:hover {
-      background: #1d4ed8;
+      background: #1e40af;
     }
     .btn-delete {
-      background: #dc2626;
+      background: #7f1d1d; /* Rojo más oscuro, consistente con btn-secondary */
       color: white;
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
@@ -73,7 +73,7 @@
       cursor: pointer;
     }
     .btn-delete:hover {
-      background: #b91c1c;
+      background: #991b1b;
     }
     .summary-card {
       display: flex;
@@ -324,7 +324,7 @@
   }
 
   function editEntry(id) {
-    const entry = entries.find(e => e.id == id);
+    const entry = entries.find(e => e.id === id); // Cambié == a === para comparación estricta
     if (entry) {
       editingId = id;
       document.getElementById('type').value = entry.Tipo;
@@ -335,6 +335,8 @@
       document.getElementById('formTitle').textContent = 'Editar Entrada';
       document.getElementById('submitBtn').textContent = 'Actualizar';
       document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    } else {
+      console.error('Entrada no encontrada para editar:', id); // Agregué log para debug
     }
   }
 
